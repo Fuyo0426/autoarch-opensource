@@ -1,0 +1,45 @@
+# 環境與機密
+.env
+.env.*
+*.key
+secrets/
+
+# 資料庫與向量庫
+*.db
+*.sqlite
+database/
+memory/
+law_vector_db/
+
+# 上傳與暫存
+mnt/
+uploads/
+sandbox/
+pending_laws/
+
+# 日誌
+logs/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp

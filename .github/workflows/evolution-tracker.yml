@@ -1,0 +1,54 @@
+name: 系統進化追蹤
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - 'squads/**'
+      - 'docs/**'
+
+permissions:
+  contents: write
+
+jobs:
+  track-evolution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 統計系統規模
+        run: |
+          SKILLS=$(find skills -name "*.py" 2>/dev/null | wc -l)
+          SQUADS=$(find squads -name "*.py" -o -name "*.json" 2>/dev/null | wc -l)
+          LAWS=$(find docs/laws -name "*.md" 2>/dev/null | wc -l)
+          COMMITS=$(git rev-list --count HEAD)
+          CONTRIBUTORS=$(git log --format='%ae' | sort -u | wc -l)
+
+          echo "# 系統進化狀態" > docs/EVOLUTION.md
+          echo "" >> docs/EVOLUTION.md
+          echo "最後更新：$(date '+%Y-%m-%d %H:%M')" >> docs/EVOLUTION.md
+          echo "" >> docs/EVOLUTION.md
+          echo "## 系統規模" >> docs/EVOLUTION.md
+          echo "" >> docs/EVOLUTION.md
+          echo "| 指標 | 數量 |" >> docs/EVOLUTION.md
+          echo "|------|------|" >> docs/EVOLUTION.md
+          echo "| Skills 模組 | $SKILLS |" >> docs/EVOLUTION.md
+          echo "| Squad 定義 | $SQUADS |" >> docs/EVOLUTION.md
+          echo "| 法規文件 | $LAWS |" >> docs/EVOLUTION.md
+          echo "| 總 Commits | $COMMITS |" >> docs/EVOLUTION.md
+          echo "| 貢獻者數 | $CONTRIBUTORS |" >> docs/EVOLUTION.md
+          echo "" >> docs/EVOLUTION.md
+          echo "## 最近進化紀錄（最新 20 筆）" >> docs/EVOLUTION.md
+          echo "" >> docs/EVOLUTION.md
+          git log --oneline -20 --format="- \`%ad\` %s — _%an_" --date=short >> docs/EVOLUTION.md
+
+      - name: Commit 進化紀錄
+        run: |
+          git config user.name "Naomi Bot"
+          git config user.email "naomi-bot@autoarch"
+          git add docs/EVOLUTION.md
+          git diff --staged --quiet || git commit -m "[Bot] 更新系統進化狀態"
+          git push

@@ -1,0 +1,66 @@
+name: 自動索引更新
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 更新法規索引
+        run: |
+          echo "# 法規文件索引" > docs/laws/INDEX.md
+          echo "" >> docs/laws/INDEX.md
+          echo "自動生成於：$(date '+%Y-%m-%d %H:%M')" >> docs/laws/INDEX.md
+          echo "" >> docs/laws/INDEX.md
+          echo "| 檔案 | 最後更新 |" >> docs/laws/INDEX.md
+          echo "|------|---------|" >> docs/laws/INDEX.md
+          for f in docs/laws/*.md; do
+            [ "$f" = "docs/laws/INDEX.md" ] && continue
+            name=$(basename "$f")
+            date=$(git log -1 --format="%ad" --date=short -- "$f" 2>/dev/null || echo "新增")
+            echo "| [$name]($name) | $date |" >> docs/laws/INDEX.md
+          done
+
+      - name: 更新技能清單
+        run: |
+          echo "# Skills 清單" > docs/SKILLS.md
+          echo "" >> docs/SKILLS.md
+          echo "自動生成於：$(date '+%Y-%m-%d %H:%M')" >> docs/SKILLS.md
+          echo "" >> docs/SKILLS.md
+          if [ -d "skills" ] && [ "$(ls -A skills 2>/dev/null)" ]; then
+            echo "| 技能檔案 | 說明 |" >> docs/SKILLS.md
+            echo "|---------|------|" >> docs/SKILLS.md
+            for f in skills/*.py; do
+              [ -f "$f" ] || continue
+              name=$(basename "$f" .py)
+              desc=$(head -5 "$f" | grep -i "desc\|說明\|#" | head -1 | sed 's/[#\*]//g' | xargs)
+              echo "| $name | ${desc:-—} |" >> docs/SKILLS.md
+            done
+          else
+            echo "_尚無技能模組_" >> docs/SKILLS.md
+          fi
+
+      - name: 產生 CHANGELOG
+        run: |
+          echo "# CHANGELOG" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          git log --oneline --no-merges -50 --format="- \`%ad\` **%s** (%an)" --date=short >> CHANGELOG.md
+
+      - name: Commit 自動更新
+        run: |
+          git config user.name "Naomi Bot"
+          git config user.email "naomi-bot@autoarch"
+          git add docs/laws/INDEX.md docs/SKILLS.md CHANGELOG.md
+          git diff --staged --quiet || git commit -m "[Bot] 自動更新索引與 CHANGELOG"
+          git push
