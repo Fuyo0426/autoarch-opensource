@@ -1,5 +1,10 @@
 # CHANGELOG
 
+- `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
+- `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
+- `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
+- `2026-03-23` **[Bot] 修正 update-progress：改用環境變數傳參，避免特殊字元破壞 Python heredoc** (Jack Chang)
+- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
@@ -45,8 +50,3 @@
 - `2026-03-23` **重寫 README：建築師視角、移除 Naomi、修正貢獻流程、加入協作指南連結** (Jack Chang)
 - `2026-03-23` **新增 MIT 開源授權** (Jack Chang)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **更新首頁標題：建築自動化 開源系統** (Jack Chang)
-- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[S00] 新增首頁進度儀表板 workflow + README 標記區塊** (Jack Chang)
-- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[Guide] 新增協作指南 HTML Slide + 啟用 GitHub Pages** (Jack Chang)
