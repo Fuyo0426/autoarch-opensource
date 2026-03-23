@@ -26,27 +26,51 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.BOT_TOKEN }}
 
-      - name: 收集統計數據
+      - name: 收集統計數據與各 Squad 進度
         id: stats
         run: |
-          SQUADS=(S03 S04 S05 S06 S07 S08 S09 S10 S11 S12 IT)
-          SQUAD_NAMES=("法規智慧組" "建築設計組" "室內設計組" "BIM技術組" "案例管理組" "永續節能組" "行政整合組" "行銷公關組" "財務管理組" "數據採集組" "進化組")
-          SQUAD_TOTAL=${#SQUADS[@]}
-          SQUAD_DONE=0
-          for i in "${!SQUADS[@]}"; do
-            sid=${SQUADS[$i]}
-            name=${SQUAD_NAMES[$i]}
-            count=$(find docs/squads -name "*${sid}*" -o -name "*${name}*" 2>/dev/null | wc -l)
-            [ "$count" -gt 0 ] && SQUAD_DONE=$((SQUAD_DONE + 1))
-          done
+          # 全域統計
           LAW_COUNT=$(find docs/laws -name "*.md" ! -name "INDEX.md" 2>/dev/null | wc -l)
           SKILL_COUNT=$(find skills -name "*.py" 2>/dev/null | wc -l)
           SQUAD_CODE=$(find squads -name "*.py" -o -name "*.json" 2>/dev/null | wc -l)
           TOOL_COUNT=$(find tools -name "*.py" 2>/dev/null | wc -l)
           TOTAL_COMMITS=$(git rev-list --count HEAD)
           CONTRIBUTORS=$(git log --format='%ae' | sort -u | wc -l)
+
+          # 各 Squad 資料夾掃描（README.md 不算，其他檔案才算有貢獻）
+          SQUAD_DIRS=(
+            "01_設計層_S03_法規智慧組"
+            "01_設計層_S04_建築設計組"
+            "01_設計層_S05_室內設計組"
+            "01_設計層_S06_BIM技術組"
+            "02_管理層_S07_案例管理組"
+            "02_管理層_S08_永續節能組"
+            "02_管理層_S09_行政整合組"
+            "03_商業層_S10_行銷公關組"
+            "03_商業層_S11_財務管理組"
+            "03_商業層_S12_數據採集組"
+            "04_核心層_IT_進化組"
+          )
+
+          SQUAD_TOTAL=${#SQUAD_DIRS[@]}
+          SQUAD_DONE=0
+          SQUAD_DATA=""
+
+          for dir in "${SQUAD_DIRS[@]}"; do
+            path="docs/squads/$dir"
+            count=$(find "$path" -type f ! -name "README.md" 2>/dev/null | wc -l)
+            if [ "$count" -gt 0 ]; then
+              SQUAD_DONE=$((SQUAD_DONE + 1))
+              status="✅"
+            else
+              status="⬜"
+            fi
+            SQUAD_DATA="${SQUAD_DATA}${dir}|${status}|${count};"
+          done
+
           echo "squad_done=$SQUAD_DONE"       >> $GITHUB_OUTPUT
           echo "squad_total=$SQUAD_TOTAL"     >> $GITHUB_OUTPUT
+          echo "squad_data=$SQUAD_DATA"       >> $GITHUB_OUTPUT
           echo "law_count=$LAW_COUNT"         >> $GITHUB_OUTPUT
           echo "skill_count=$SKILL_COUNT"     >> $GITHUB_OUTPUT
           echo "squad_code=$SQUAD_CODE"       >> $GITHUB_OUTPUT
@@ -58,6 +82,7 @@ jobs:
         env:
           SQUAD_DONE:    ${{ steps.stats.outputs.squad_done }}
           SQUAD_TOTAL:   ${{ steps.stats.outputs.squad_total }}
+          SQUAD_DATA:    ${{ steps.stats.outputs.squad_data }}
           LAW_COUNT:     ${{ steps.stats.outputs.law_count }}
           SKILL_COUNT:   ${{ steps.stats.outputs.skill_count }}
           SQUAD_CODE:    ${{ steps.stats.outputs.squad_code }}
@@ -66,29 +91,86 @@ jobs:
           CONTRIBUTORS:  ${{ steps.stats.outputs.contributors }}
         run: |
           python3 << 'PYEOF'
-          import os, re, textwrap
+          import os, re
           from datetime import datetime, timezone
-          done=int(os.environ.get("SQUAD_DONE",0)); total=int(os.environ.get("SQUAD_TOTAL",11))
-          law=int(os.environ.get("LAW_COUNT",0)); skill=int(os.environ.get("SKILL_COUNT",0))
-          code=int(os.environ.get("SQUAD_CODE",0)); tool=int(os.environ.get("TOOL_COUNT",0))
-          commits=os.environ.get("TOTAL_COMMITS","0"); contribs=os.environ.get("CONTRIBUTORS","0")
-          now=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-          pct=done*100//total if total>0 else 0
-          blocks=done*10//total if total>0 else 0
-          bar="█"*blocks+"░"*(10-blocks)
-          law_s=f"✅ {law} 份文件" if law>0 else "⬜ 待建立"
-          skill_s=f"✅ {skill} 個模組" if skill>0 else "⬜ 尚無模組"
-          code_s=f"✅ {code} 個模組" if code>0 else "⬜ 尚無模組"
-          tool_s=f"✅ {tool} 個工具" if tool>0 else "⬜ 尚無工具"
-          block=(
+
+          done       = int(os.environ.get("SQUAD_DONE", 0))
+          total      = int(os.environ.get("SQUAD_TOTAL", 11))
+          squad_data = os.environ.get("SQUAD_DATA", "")
+          law        = int(os.environ.get("LAW_COUNT", 0))
+          skill      = int(os.environ.get("SKILL_COUNT", 0))
+          code       = int(os.environ.get("SQUAD_CODE", 0))
+          tool       = int(os.environ.get("TOOL_COUNT", 0))
+          commits    = os.environ.get("TOTAL_COMMITS", "0")
+          contribs   = os.environ.get("CONTRIBUTORS", "0")
+          now        = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+          pct    = done * 100 // total if total > 0 else 0
+          blocks = done * 10 // total if total > 0 else 0
+          bar    = "█" * blocks + "░" * (10 - blocks)
+
+          # Squad 層級對照
+          LAYER = {
+            "01": ("專業設計層", "🏗️"),
+            "02": ("專案管理層", "📋"),
+            "03": ("商業支援層", "💼"),
+            "04": ("系統核心層", "⚙️"),
+          }
+
+          # 解析 squad_data
+          squad_rows = ""
+          prev_layer = ""
+          for entry in squad_data.split(";"):
+            entry = entry.strip()
+            if not entry:
+              continue
+            parts = entry.split("|")
+            if len(parts) < 3:
+              continue
+            folder, status, count = parts[0], parts[1], parts[2]
+            # 從資料夾名稱取 Squad ID 和組名
+            segs = folder.split("_")          # ['01','設計層','S03','法規智慧組']
+            layer_key = segs[0]
+            squad_id  = segs[2] if len(segs) > 2 else ""
+            squad_name = "_".join(segs[3:]) if len(segs) > 3 else ""
+            layer_name, layer_icon = LAYER.get(layer_key, ("", ""))
+            count_i = int(count)
+
+            # 層級分隔標題
+            if layer_key != prev_layer:
+              squad_rows += f"| **{layer_icon} {layer_name}** | | | |\n"
+              prev_layer = layer_key
+
+            # 貢獻狀態
+            if count_i == 0:
+              contrib = "**🙋 開放貢獻**"
+            elif count_i < 3:
+              contrib = f"🔧 進行中（{count_i} 份）"
+            else:
+              contrib = f"✅ 完善中（{count_i} 份）"
+
+            repo_link = f"[`docs/squads/{folder}`](docs/squads/{folder})"
+            squad_rows += f"| {squad_id} {squad_name} | {status} | {contrib} | {repo_link} |\n"
+
+          law_s   = f"✅ {law} 份" if law   > 0 else "⬜ 待建立"
+          skill_s = f"✅ {skill} 個" if skill > 0 else "⬜ 尚無"
+          code_s  = f"✅ {code} 個" if code  > 0 else "⬜ 尚無"
+          tool_s  = f"✅ {tool} 個" if tool  > 0 else "⬜ 尚無"
+
+          block = (
             "<!-- PROGRESS_START -->\n"
             "## 📊 系統執行進度\n\n"
-            f"> 自動更新於：{now} ｜ 總 Commits：{commits} ｜ 貢獻者：{contribs}\n\n"
-            f"### Squad 文件覆蓋率　`{bar} {pct}%`\n\n"
-            "| 功能 | 狀態 | 說明 |\n|------|------|------|\n"
-            f"| 📋 法規文件庫 | {law_s} | `docs/laws/` |\n"
+            f"> 自動更新：{now} ｜ Commits：{commits} ｜ 貢獻者：{contribs}\n\n"
+            f"### Squad 文件覆蓋率　`{bar}` {done}/{total} ({pct}%)\n\n"
+            "| Squad | 狀態 | 貢獻進度 | 資料夾 |\n"
+            "|-------|------|---------|--------|\n"
+            + squad_rows +
+            "\n> 🙋 **開放貢獻** = 尚無任何文件，最歡迎你來新增！\n\n"
+            "### 系統資源統計\n\n"
+            "| 資源 | 數量 | 路徑 |\n|------|------|------|\n"
+            f"| 📋 法規文件 | {law_s} | `docs/laws/` |\n"
             f"| 🧠 Skills 模組 | {skill_s} | `skills/` |\n"
-            f"| 🤖 Squad 程式模組 | {code_s} | `squads/` |\n"
+            f"| 🤖 Squad 程式碼 | {code_s} | `squads/` |\n"
             f"| 🔧 工具模組 | {tool_s} | `tools/` |\n\n"
             "### GitHub Actions 狀態\n\n"
             "![自動索引更新](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/auto-index.yml/badge.svg)\n"
@@ -96,10 +178,14 @@ jobs:
             "![進度儀表板](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/update-progress.yml/badge.svg)\n\n"
             "<!-- PROGRESS_END -->"
           )
-          with open("README.md","r",encoding="utf-8") as f: content=f.read()
-          new=re.sub(r"<!-- PROGRESS_START -->.*?<!-- PROGRESS_END -->",block,content,flags=re.DOTALL)
-          if "<!-- PROGRESS_START -->" not in content: new=content.rstrip()+"\n\n"+block+"\n"
-          with open("README.md","w",encoding="utf-8") as f: f.write(new)
+
+          with open("README.md", "r", encoding="utf-8") as f:
+            content = f.read()
+          new = re.sub(r"<!-- PROGRESS_START -->.*?<!-- PROGRESS_END -->", block, content, flags=re.DOTALL)
+          if "<!-- PROGRESS_START -->" not in content:
+            new = content.rstrip() + "\n\n" + block + "\n"
+          with open("README.md", "w", encoding="utf-8") as f:
+            f.write(new)
           print(f"Done. {done}/{total} ({pct}%)")
           PYEOF
 
