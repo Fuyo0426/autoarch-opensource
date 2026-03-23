@@ -1,81 +1,121 @@
 # 建築自動化　開源系統
 
-> Naomi V21 建築事務所 AI 平台。LINE Bot + FastAPI + 多智能體架構。
+> 讓建築師不再花時間翻法規、算面積、查造價——AI 幫你做，你專注設計。
+>
+> 由建築師、法規專員、結構工程師、BIM 技術者共同維護的開源 AI 協作平台。
+
+![License](https://img.shields.io/badge/license-MIT-orange)
+![自動索引更新](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/auto-index.yml/badge.svg)
+![進度儀表板](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/update-progress.yml/badge.svg)
 
 ---
 
-## 快速開始
+## 這是什麼
 
-```bash
-pip install fastapi uvicorn line-bot-sdk chromadb groq openai anthropic \
-            pydantic requests python-docx pypdf PyMuPDF python-dotenv psutil
-cp .env.example .env   # 填入你的 API keys
-python Naomi_V21_Final.py
-```
+這個系統讓建築師透過 LINE，直接問：
 
----
+- 「這塊地的容積率上限是多少？」
+- 「這棟建築需要幾個無障礙停車位？」
+- 「15 層 RC 造，大概要多少造價？」
+- 「這個案子的投報率和 IRR？」
 
-## 資料夾結構
-
-```
-autoarch_opensource/
-├── Naomi_V21_Final.py        # 主程式
-├── skills/                   # 技能模組（動態載入）
-├── squads/                   # Squad 定義（動態載入）
-├── tools/                    # 工具模組
-├── docs/
-│   ├── squads/               # Squad 組織架構文件
-│   └── laws/                 # 法規對照表
-└── .github/workflows/        # 自動化流程
-```
+AI 根據最新法規、真實案例、建材物價，給出有依據的回答。
 
 ---
 
 ## Squad 架構
 
-| Squad | 名稱 | 人數 |
-|-------|------|------|
-| 03 | 法規智慧組 | 6 |
-| 04 | 建築設計組 | 6 |
-| 05 | 室內設計組 | 6 |
-| 06 | BIM 技術組 | 6 |
-| 07 | 案例管理組 | 4 |
-| 08 | 永續節能組 | 3 |
-| 09 | 行政整合組 | - |
-| 10 | 行銷公關組 | 6 |
-| 11 | 財務管理組 | 11 |
-| 12 | 數據採集組 | 3 |
-| IT | 進化組 | 6 |
+每個 Squad 負責一個專業領域，由該領域的人維護。
 
-詳見 [docs/squads/Naomi_Squad組織架構.md](docs/squads/Naomi_Squad組織架構.md)
+| Squad | 名稱 | 負責範疇 |
+|-------|------|---------|
+| S03 | 法規智慧組 | 建築法規、容積率、地籍解析 |
+| S04 | 建築設計組 | 體量策略、結構初估、立面設計 |
+| S05 | 室內設計組 | 風格定義、照明計算、軟裝選配 |
+| S06 | BIM 技術組 | Revit 建模、碰撞檢測、IFC 輸出 |
+| S07 | 案例管理組 | 作品集、造價基準、競圖策略 |
+| S08 | 永續節能組 | EEWH 綠建築指標、ESG、碳足跡 |
+| S09 | 行政整合組 | 甘特圖、建照申請流程、文件追蹤 |
+| S10 | 行銷公關組 | 提案書、品牌、社群文案 |
+| S11 | 財務管理組 | ROI / NPV / IRR、造價估算、融資 |
+| S12 | 數據採集組 | 建材物價、法規更新、實價登錄 |
+| IT  | 進化組 | 系統監控、部署、自我進化 |
 
 ---
 
-## 貢獻規則（自由協作）
+## 如何加入協作
 
-- **直接 push `main`**，不需 PR 審核
-- 每個人負責自己的 Squad 資料夾
-- commit message 格式：`[Squad號] 說明` → 例：`[S03] 新增建蔽率條文`
-- 法規文件放 `docs/laws/`，架構文件放 `docs/squads/`
-- 程式模組放對應的 `skills/` 或 `squads/` 資料夾
+**不需要懂程式，也不需要懂 Git。**
+
+👉 [查看協作指南 + 加入申請](https://autoarch-guide.vercel.app)
+
+---
+
+## 貢獻流程
+
+1. Fork 這個 Repo
+2. 在自己的 Squad 資料夾新增或修改內容
+3. 開 Pull Request，說明你做了什麼
+4. 等候審核合併
+
+**Commit 格式**：`[S03] 新增都市計畫法第 85 條解讀`
 
 ---
 
 ## 自動化機制
 
-每次 push 後，GitHub Actions 自動執行：
+每次 Pull Request 合併後，系統自動執行：
 
-| 觸發條件 | 動作 |
-|---------|------|
-| 任何 push | 掃描所有 docs/ 更新 CHANGELOG |
-| `docs/laws/` 有新增 | 自動更新法規索引 |
-| `skills/` 有新增 | 自動更新技能清單 |
-| `squads/` 有修改 | 自動更新 Squad 版本號 |
+| 動作 | 說明 |
+|------|------|
+| 更新法規索引 | `docs/laws/` 有新文件時自動重新編目 |
+| 更新技能清單 | `skills/` 有新模組時自動列入 |
+| 更新進度儀表板 | README 進度區塊自動刷新 |
+| 產生 CHANGELOG | 每次變更自動記錄版本歷史 |
 
 ---
-
-*自動生成索引由 GitHub Actions 維護，無需手動更新。*
 
 <!-- PROGRESS_START -->
 <!-- 此區塊由 GitHub Actions 自動更新，請勿手動編輯 -->
 <!-- PROGRESS_END -->
+
+---
+
+## 開發者部署
+
+<details>
+<summary>展開部署說明</summary>
+
+**環境需求**
+
+```bash
+pip install fastapi uvicorn line-bot-sdk chromadb groq openai anthropic \
+            pydantic requests python-docx pypdf PyMuPDF python-dotenv psutil
+```
+
+**啟動**
+
+```bash
+cp .env.example .env   # 填入 API keys
+python Naomi_V21_Final.py
+```
+
+**資料夾結構**
+
+```
+autoarch_opensource/
+├── Naomi_V21_Final.py        # 主程式
+├── skills/                   # 技能模組（動態載入）
+├── squads/                   # Squad 定義
+├── tools/                    # 工具模組
+├── docs/
+│   ├── squads/               # Squad 組織文件
+│   └── laws/                 # 法規對照表
+└── .github/workflows/        # 自動化流程
+```
+
+</details>
+
+---
+
+© 2026 建築自動化開源系統　[MIT License](LICENSE)
