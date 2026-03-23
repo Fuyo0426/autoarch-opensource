@@ -5,6 +5,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Bot commit 不觸發，避免無限迴圈
+if: "!startsWith(github.event.head_commit.message, '[Bot]')"
+
+concurrency:
+  group: bot-push
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -15,8 +22,7 @@ jobs:
   update-index:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.BOT_TOKEN }}
@@ -69,5 +75,7 @@ jobs:
           git config user.name "Naomi Bot"
           git config user.email "naomi-bot@autoarch"
           git add docs/laws/INDEX.md docs/SKILLS.md CHANGELOG.md
-          git diff --staged --quiet || git commit -m "[Bot] 自動更新索引與 CHANGELOG"
+          git diff --staged --quiet && echo "無變更，跳過 commit" && exit 0
+          git pull --rebase origin main
+          git commit -m "[Bot] 自動更新索引與 CHANGELOG"
           git push

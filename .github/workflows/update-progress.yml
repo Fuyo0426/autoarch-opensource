@@ -5,6 +5,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+if: "!startsWith(github.event.head_commit.message, '[Bot]')"
+
+concurrency:
+  group: bot-push
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -27,106 +33,74 @@ jobs:
           SQUAD_NAMES=("法規智慧組" "建築設計組" "室內設計組" "BIM技術組" "案例管理組" "永續節能組" "行政整合組" "行銷公關組" "財務管理組" "數據採集組" "進化組")
           SQUAD_TOTAL=${#SQUADS[@]}
           SQUAD_DONE=0
-
           for i in "${!SQUADS[@]}"; do
             sid=${SQUADS[$i]}
             name=${SQUAD_NAMES[$i]}
             count=$(find docs/squads -name "*${sid}*" -o -name "*${name}*" 2>/dev/null | wc -l)
             [ "$count" -gt 0 ] && SQUAD_DONE=$((SQUAD_DONE + 1))
           done
-
           LAW_COUNT=$(find docs/laws -name "*.md" ! -name "INDEX.md" 2>/dev/null | wc -l)
           SKILL_COUNT=$(find skills -name "*.py" 2>/dev/null | wc -l)
           SQUAD_CODE=$(find squads -name "*.py" -o -name "*.json" 2>/dev/null | wc -l)
           TOOL_COUNT=$(find tools -name "*.py" 2>/dev/null | wc -l)
           TOTAL_COMMITS=$(git rev-list --count HEAD)
           CONTRIBUTORS=$(git log --format='%ae' | sort -u | wc -l)
-
-          echo "squad_done=$SQUAD_DONE"     >> $GITHUB_OUTPUT
-          echo "squad_total=$SQUAD_TOTAL"   >> $GITHUB_OUTPUT
-          echo "law_count=$LAW_COUNT"       >> $GITHUB_OUTPUT
-          echo "skill_count=$SKILL_COUNT"   >> $GITHUB_OUTPUT
-          echo "squad_code=$SQUAD_CODE"     >> $GITHUB_OUTPUT
-          echo "tool_count=$TOOL_COUNT"     >> $GITHUB_OUTPUT
+          echo "squad_done=$SQUAD_DONE"       >> $GITHUB_OUTPUT
+          echo "squad_total=$SQUAD_TOTAL"     >> $GITHUB_OUTPUT
+          echo "law_count=$LAW_COUNT"         >> $GITHUB_OUTPUT
+          echo "skill_count=$SKILL_COUNT"     >> $GITHUB_OUTPUT
+          echo "squad_code=$SQUAD_CODE"       >> $GITHUB_OUTPUT
+          echo "tool_count=$TOOL_COUNT"       >> $GITHUB_OUTPUT
           echo "total_commits=$TOTAL_COMMITS" >> $GITHUB_OUTPUT
-          echo "contributors=$CONTRIBUTORS" >> $GITHUB_OUTPUT
+          echo "contributors=$CONTRIBUTORS"   >> $GITHUB_OUTPUT
 
       - name: 更新 README 進度區塊
         env:
-          SQUAD_DONE: ${{ steps.stats.outputs.squad_done }}
-          SQUAD_TOTAL: ${{ steps.stats.outputs.squad_total }}
-          LAW_COUNT: ${{ steps.stats.outputs.law_count }}
-          SKILL_COUNT: ${{ steps.stats.outputs.skill_count }}
-          SQUAD_CODE: ${{ steps.stats.outputs.squad_code }}
-          TOOL_COUNT: ${{ steps.stats.outputs.tool_count }}
+          SQUAD_DONE:    ${{ steps.stats.outputs.squad_done }}
+          SQUAD_TOTAL:   ${{ steps.stats.outputs.squad_total }}
+          LAW_COUNT:     ${{ steps.stats.outputs.law_count }}
+          SKILL_COUNT:   ${{ steps.stats.outputs.skill_count }}
+          SQUAD_CODE:    ${{ steps.stats.outputs.squad_code }}
+          TOOL_COUNT:    ${{ steps.stats.outputs.tool_count }}
           TOTAL_COMMITS: ${{ steps.stats.outputs.total_commits }}
-          CONTRIBUTORS: ${{ steps.stats.outputs.contributors }}
+          CONTRIBUTORS:  ${{ steps.stats.outputs.contributors }}
         run: |
           python3 << 'PYEOF'
-          import os, re
+          import os, re, textwrap
           from datetime import datetime, timezone
-
-          done  = int(os.environ.get("SQUAD_DONE", 0))
-          total = int(os.environ.get("SQUAD_TOTAL", 11))
-          law   = int(os.environ.get("LAW_COUNT", 0))
-          skill = int(os.environ.get("SKILL_COUNT", 0))
-          code  = int(os.environ.get("SQUAD_CODE", 0))
-          tool  = int(os.environ.get("TOOL_COUNT", 0))
-          commits = os.environ.get("TOTAL_COMMITS", "0")
-          contribs = os.environ.get("CONTRIBUTORS", "0")
-          now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-
-          pct = done * 100 // total
-          blocks = done * 10 // total
-          bar = "█" * blocks + "░" * (10 - blocks)
-
-          law_s   = f"✅ {law} 份文件"  if law   > 0 else "⬜ 待建立"
-          skill_s = f"✅ {skill} 個模組" if skill > 0 else "⬜ 尚無模組"
-          code_s  = f"✅ {code} 個模組"  if code  > 0 else "⬜ 尚無模組"
-          tool_s  = f"✅ {tool} 個工具"  if tool  > 0 else "⬜ 尚無工具"
-
-          block = f"""<!-- PROGRESS_START -->
-          ## 📊 系統執行進度
-
-          > 自動更新於：{now} ｜ 總 Commits：{commits} ｜ 貢獻者：{contribs}
-
-          ### Squad 文件覆蓋率　`{bar} {pct}%`
-
-          | 功能 | 狀態 | 說明 |
-          |------|------|------|
-          | 📋 法規文件庫 | {law_s} | `docs/laws/` |
-          | 🧠 Skills 模組 | {skill_s} | `skills/` |
-          | 🤖 Squad 程式模組 | {code_s} | `squads/` |
-          | 🔧 工具模組 | {tool_s} | `tools/` |
-
-          ### GitHub Actions 狀態
-
-          ![自動索引更新](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/auto-index.yml/badge.svg)
-          ![進化追蹤](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/evolution-tracker.yml/badge.svg)
-          ![進度儀表板](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/update-progress.yml/badge.svg)
-
-          <!-- PROGRESS_END -->"""
-
-          import textwrap
-          block = textwrap.dedent(block)
-
-          with open("README.md", "r", encoding="utf-8") as f:
-              content = f.read()
-
-          new_content = re.sub(
-              r"<!-- PROGRESS_START -->.*?<!-- PROGRESS_END -->",
-              block,
-              content,
-              flags=re.DOTALL,
+          done=int(os.environ.get("SQUAD_DONE",0)); total=int(os.environ.get("SQUAD_TOTAL",11))
+          law=int(os.environ.get("LAW_COUNT",0)); skill=int(os.environ.get("SKILL_COUNT",0))
+          code=int(os.environ.get("SQUAD_CODE",0)); tool=int(os.environ.get("TOOL_COUNT",0))
+          commits=os.environ.get("TOTAL_COMMITS","0"); contribs=os.environ.get("CONTRIBUTORS","0")
+          now=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+          pct=done*100//total if total>0 else 0
+          blocks=done*10//total if total>0 else 0
+          bar="█"*blocks+"░"*(10-blocks)
+          law_s=f"✅ {law} 份文件" if law>0 else "⬜ 待建立"
+          skill_s=f"✅ {skill} 個模組" if skill>0 else "⬜ 尚無模組"
+          code_s=f"✅ {code} 個模組" if code>0 else "⬜ 尚無模組"
+          tool_s=f"✅ {tool} 個工具" if tool>0 else "⬜ 尚無工具"
+          block=(
+            "<!-- PROGRESS_START -->\n"
+            "## 📊 系統執行進度\n\n"
+            f"> 自動更新於：{now} ｜ 總 Commits：{commits} ｜ 貢獻者：{contribs}\n\n"
+            f"### Squad 文件覆蓋率　`{bar} {pct}%`\n\n"
+            "| 功能 | 狀態 | 說明 |\n|------|------|------|\n"
+            f"| 📋 法規文件庫 | {law_s} | `docs/laws/` |\n"
+            f"| 🧠 Skills 模組 | {skill_s} | `skills/` |\n"
+            f"| 🤖 Squad 程式模組 | {code_s} | `squads/` |\n"
+            f"| 🔧 工具模組 | {tool_s} | `tools/` |\n\n"
+            "### GitHub Actions 狀態\n\n"
+            "![自動索引更新](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/auto-index.yml/badge.svg)\n"
+            "![進化追蹤](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/evolution-tracker.yml/badge.svg)\n"
+            "![進度儀表板](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/update-progress.yml/badge.svg)\n\n"
+            "<!-- PROGRESS_END -->"
           )
-
-          if "<!-- PROGRESS_START -->" not in content:
-              new_content = content.rstrip() + "\n\n" + block + "\n"
-
-          with open("README.md", "w", encoding="utf-8") as f:
-              f.write(new_content)
-
-          print(f"README updated. Squad: {done}/{total} ({pct}%)")
+          with open("README.md","r",encoding="utf-8") as f: content=f.read()
+          new=re.sub(r"<!-- PROGRESS_START -->.*?<!-- PROGRESS_END -->",block,content,flags=re.DOTALL)
+          if "<!-- PROGRESS_START -->" not in content: new=content.rstrip()+"\n\n"+block+"\n"
+          with open("README.md","w",encoding="utf-8") as f: f.write(new)
+          print(f"Done. {done}/{total} ({pct}%)")
           PYEOF
 
       - name: Commit README 進度更新
@@ -134,5 +108,7 @@ jobs:
           git config user.name "Naomi Bot"
           git config user.email "naomi-bot@autoarch"
           git add README.md
-          git diff --staged --quiet || git commit -m "[Bot] 更新首頁執行進度儀表板"
+          git diff --staged --quiet && echo "無變更" && exit 0
+          git pull --rebase origin main
+          git commit -m "[Bot] 更新首頁執行進度儀表板"
           git push

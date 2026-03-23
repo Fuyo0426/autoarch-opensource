@@ -7,6 +7,13 @@ on:
       - 'skills/**'
       - 'squads/**'
       - 'docs/**'
+  workflow_dispatch:
+
+if: "!startsWith(github.event.head_commit.message, '[Bot]')"
+
+concurrency:
+  group: bot-push
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -31,6 +38,7 @@ jobs:
           COMMITS=$(git rev-list --count HEAD)
           CONTRIBUTORS=$(git log --format='%ae' | sort -u | wc -l)
 
+          mkdir -p docs
           echo "# 系統進化狀態" > docs/EVOLUTION.md
           echo "" >> docs/EVOLUTION.md
           echo "最後更新：$(date '+%Y-%m-%d %H:%M')" >> docs/EVOLUTION.md
@@ -54,5 +62,7 @@ jobs:
           git config user.name "Naomi Bot"
           git config user.email "naomi-bot@autoarch"
           git add docs/EVOLUTION.md
-          git diff --staged --quiet || git commit -m "[Bot] 更新系統進化狀態"
+          git diff --staged --quiet && echo "無變更，跳過 commit" && exit 0
+          git pull --rebase origin main
+          git commit -m "[Bot] 更新系統進化狀態"
           git push
