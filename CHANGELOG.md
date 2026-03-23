@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- `2026-03-23` **[S00] 建立 11 個 Squad 獨立資料夾（含四層結構前綴）** (Jack Chang)
+- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **觸發 workflow 測試** (Jack Chang)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **修正 workflow：git stash 保存 unstaged changes 再 pull** (Jack Chang)
@@ -48,5 +50,3 @@
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
