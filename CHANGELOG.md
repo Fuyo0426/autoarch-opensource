@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- `2026-03-24` **feat: 新增 CODEOWNERS，頂層架構限 Fuyo0426 審核，Squad 資料夾開放社群** (Jack Chang)
+- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
+- `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
 - `2026-03-23` **feat: 進度儀表板改為逐Squad追蹤，標示開放貢獻欄位** (Jack Chang)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
@@ -47,6 +50,3 @@
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
 - `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
-- `2026-03-23` **[Bot] 更新系統進化狀態** (Naomi Bot)
-- `2026-03-23` **[Bot] 更新系統進化狀態** (Naomi Bot)
-- `2026-03-23` **[Bot] 更新系統進化狀態** (Naomi Bot)
