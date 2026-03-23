@@ -73,8 +73,10 @@ jobs:
       - name: Commit 自動更新
         run: |
           git config user.name "Naomi Bot"
+          git stash --include-untracked || true
           git config user.email "naomi-bot@autoarch"
           git pull --rebase origin main
+          git stash pop || true
           git add docs/laws/INDEX.md docs/SKILLS.md CHANGELOG.md
           git diff --staged --quiet && echo "無變更" && exit 0
           git commit -m "[Bot] 自動更新索引與 CHANGELOG"

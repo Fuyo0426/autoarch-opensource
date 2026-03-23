@@ -106,8 +106,10 @@ jobs:
       - name: Commit README 進度更新
         run: |
           git config user.name "Naomi Bot"
+          git stash --include-untracked || true
           git config user.email "naomi-bot@autoarch"
           git pull --rebase origin main
+          git stash pop || true
           git add README.md
           git diff --staged --quiet && echo "無變更" && exit 0
           git commit -m "[Bot] 更新首頁執行進度儀表板"
