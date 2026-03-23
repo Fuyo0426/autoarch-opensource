@@ -20,87 +20,84 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.BOT_TOKEN }}
 
-      - name: 掃描各功能執行狀態並更新 README
-        shell: bash
+      - name: 收集統計數據
+        id: stats
         run: |
-          bar() {
-            local filled=$1 total=$2
-            local pct=$(( filled * 100 / total ))
-            local blocks=$(( filled * 10 / total ))
-            local bar=""
-            for i in $(seq 1 $blocks);  do bar="${bar}█"; done
-            for i in $(seq 1 $((10 - blocks))); do bar="${bar}░"; done
-            echo "${bar} ${pct}%"
-          }
-
-          # ── Squad 文件覆蓋率 ──────────────────────────────────────
           SQUADS=(S03 S04 S05 S06 S07 S08 S09 S10 S11 S12 IT)
           SQUAD_NAMES=("法規智慧組" "建築設計組" "室內設計組" "BIM技術組" "案例管理組" "永續節能組" "行政整合組" "行銷公關組" "財務管理組" "數據採集組" "進化組")
           SQUAD_TOTAL=${#SQUADS[@]}
           SQUAD_DONE=0
 
-          SQUAD_TABLE="| Squad | 名稱 | 文件數 | 狀態 |\n|-------|------|--------|------|\n"
           for i in "${!SQUADS[@]}"; do
             sid=${SQUADS[$i]}
             name=${SQUAD_NAMES[$i]}
-            dir_lower=$(echo "$sid" | tr '[:upper:]' '[:lower:]')
-            count=$(find docs/squads -name "*${dir_lower}*" -o -name "*${sid}*" 2>/dev/null | wc -l)
-            count=$(( count + $(find docs/squads -name "*${name}*" 2>/dev/null | wc -l) ))
-            if [ "$count" -gt 0 ]; then
-              status="✅ 已建立"
-              SQUAD_DONE=$((SQUAD_DONE + 1))
-            else
-              status="⬜ 待建立"
-            fi
-            SQUAD_TABLE="${SQUAD_TABLE}| ${sid} | ${name} | ${count} | ${status} |\n"
+            count=$(find docs/squads -name "*${sid}*" -o -name "*${name}*" 2>/dev/null | wc -l)
+            [ "$count" -gt 0 ] && SQUAD_DONE=$((SQUAD_DONE + 1))
           done
-          SQUAD_PCT=$(( SQUAD_DONE * 100 / SQUAD_TOTAL ))
 
-          # ── 法規文件 ──────────────────────────────────────────────
           LAW_COUNT=$(find docs/laws -name "*.md" ! -name "INDEX.md" 2>/dev/null | wc -l)
-          LAW_STATUS="⬜ 待建立"
-          [ "$LAW_COUNT" -gt 0 ] && LAW_STATUS="✅ ${LAW_COUNT} 份文件"
-
-          # ── Skills 模組 ───────────────────────────────────────────
           SKILL_COUNT=$(find skills -name "*.py" 2>/dev/null | wc -l)
-          SKILL_STATUS="⬜ 尚無模組"
-          [ "$SKILL_COUNT" -gt 0 ] && SKILL_STATUS="✅ ${SKILL_COUNT} 個模組"
-
-          # ── Squad 程式模組 ────────────────────────────────────────
           SQUAD_CODE=$(find squads -name "*.py" -o -name "*.json" 2>/dev/null | wc -l)
-          CODE_STATUS="⬜ 尚無模組"
-          [ "$SQUAD_CODE" -gt 0 ] && CODE_STATUS="✅ ${SQUAD_CODE} 個模組"
-
-          # ── 工具模組 ──────────────────────────────────────────────
           TOOL_COUNT=$(find tools -name "*.py" 2>/dev/null | wc -l)
-          TOOL_STATUS="⬜ 尚無工具"
-          [ "$TOOL_COUNT" -gt 0 ] && TOOL_STATUS="✅ ${TOOL_COUNT} 個工具"
-
-          # ── Git 統計 ──────────────────────────────────────────────
           TOTAL_COMMITS=$(git rev-list --count HEAD)
           CONTRIBUTORS=$(git log --format='%ae' | sort -u | wc -l)
-          LAST_UPDATE=$(date '+%Y-%m-%d %H:%M UTC')
 
-          # ── 組合 PROGRESS 區塊 ────────────────────────────────────
-          SQUAD_BAR=$(bar $SQUAD_DONE $SQUAD_TOTAL)
+          echo "squad_done=$SQUAD_DONE"     >> $GITHUB_OUTPUT
+          echo "squad_total=$SQUAD_TOTAL"   >> $GITHUB_OUTPUT
+          echo "law_count=$LAW_COUNT"       >> $GITHUB_OUTPUT
+          echo "skill_count=$SKILL_COUNT"   >> $GITHUB_OUTPUT
+          echo "squad_code=$SQUAD_CODE"     >> $GITHUB_OUTPUT
+          echo "tool_count=$TOOL_COUNT"     >> $GITHUB_OUTPUT
+          echo "total_commits=$TOTAL_COMMITS" >> $GITHUB_OUTPUT
+          echo "contributors=$CONTRIBUTORS" >> $GITHUB_OUTPUT
 
-          BLOCK="<!-- PROGRESS_START -->
+      - name: 更新 README 進度區塊
+        env:
+          SQUAD_DONE: ${{ steps.stats.outputs.squad_done }}
+          SQUAD_TOTAL: ${{ steps.stats.outputs.squad_total }}
+          LAW_COUNT: ${{ steps.stats.outputs.law_count }}
+          SKILL_COUNT: ${{ steps.stats.outputs.skill_count }}
+          SQUAD_CODE: ${{ steps.stats.outputs.squad_code }}
+          TOOL_COUNT: ${{ steps.stats.outputs.tool_count }}
+          TOTAL_COMMITS: ${{ steps.stats.outputs.total_commits }}
+          CONTRIBUTORS: ${{ steps.stats.outputs.contributors }}
+        run: |
+          python3 << 'PYEOF'
+          import os, re
+          from datetime import datetime, timezone
+
+          done  = int(os.environ.get("SQUAD_DONE", 0))
+          total = int(os.environ.get("SQUAD_TOTAL", 11))
+          law   = int(os.environ.get("LAW_COUNT", 0))
+          skill = int(os.environ.get("SKILL_COUNT", 0))
+          code  = int(os.environ.get("SQUAD_CODE", 0))
+          tool  = int(os.environ.get("TOOL_COUNT", 0))
+          commits = os.environ.get("TOTAL_COMMITS", "0")
+          contribs = os.environ.get("CONTRIBUTORS", "0")
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+          pct = done * 100 // total
+          blocks = done * 10 // total
+          bar = "█" * blocks + "░" * (10 - blocks)
+
+          law_s   = f"✅ {law} 份文件"  if law   > 0 else "⬜ 待建立"
+          skill_s = f"✅ {skill} 個模組" if skill > 0 else "⬜ 尚無模組"
+          code_s  = f"✅ {code} 個模組"  if code  > 0 else "⬜ 尚無模組"
+          tool_s  = f"✅ {tool} 個工具"  if tool  > 0 else "⬜ 尚無工具"
+
+          block = f"""<!-- PROGRESS_START -->
           ## 📊 系統執行進度
 
-          > 自動更新於：${LAST_UPDATE} ｜ 總 Commits：${TOTAL_COMMITS} ｜ 貢獻者：${CONTRIBUTORS}
+          > 自動更新於：{now} ｜ 總 Commits：{commits} ｜ 貢獻者：{contribs}
 
-          ### Squad 文件覆蓋率　\`${SQUAD_BAR}\`
-
-          $(echo -e "$SQUAD_TABLE")
-
-          ### 功能模組狀態
+          ### Squad 文件覆蓋率　`{bar} {pct}%`
 
           | 功能 | 狀態 | 說明 |
           |------|------|------|
-          | 📋 法規文件庫 | ${LAW_STATUS} | \`docs/laws/\` |
-          | 🧠 Skills 模組 | ${SKILL_STATUS} | \`skills/\` |
-          | 🤖 Squad 程式模組 | ${CODE_STATUS} | \`squads/\` |
-          | 🔧 工具模組 | ${TOOL_STATUS} | \`tools/\` |
+          | 📋 法規文件庫 | {law_s} | `docs/laws/` |
+          | 🧠 Skills 模組 | {skill_s} | `skills/` |
+          | 🤖 Squad 程式模組 | {code_s} | `squads/` |
+          | 🔧 工具模組 | {tool_s} | `tools/` |
 
           ### GitHub Actions 狀態
 
@@ -108,33 +105,28 @@ jobs:
           ![進化追蹤](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/evolution-tracker.yml/badge.svg)
           ![進度儀表板](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/update-progress.yml/badge.svg)
 
-          <!-- PROGRESS_END -->"
+          <!-- PROGRESS_END -->"""
 
-          # 寫入 README（替換兩個標記之間的內容）
-          python3 - <<PYEOF
-          import re, textwrap
-
-          with open('README.md', 'r', encoding='utf-8') as f:
-              content = f.read()
-
-          block = """$BLOCK"""
+          import textwrap
           block = textwrap.dedent(block)
 
+          with open("README.md", "r", encoding="utf-8") as f:
+              content = f.read()
+
           new_content = re.sub(
-              r'<!-- PROGRESS_START -->.*?<!-- PROGRESS_END -->',
+              r"<!-- PROGRESS_START -->.*?<!-- PROGRESS_END -->",
               block,
               content,
-              flags=re.DOTALL
+              flags=re.DOTALL,
           )
 
-          # 如果 README 還沒有標記，就附加在最後
-          if '<!-- PROGRESS_START -->' not in content:
-              new_content = content.rstrip() + '\n\n' + block + '\n'
+          if "<!-- PROGRESS_START -->" not in content:
+              new_content = content.rstrip() + "\n\n" + block + "\n"
 
-          with open('README.md', 'w', encoding='utf-8') as f:
+          with open("README.md", "w", encoding="utf-8") as f:
               f.write(new_content)
 
-          print('README updated.')
+          print(f"README updated. Squad: {done}/{total} ({pct}%)")
           PYEOF
 
       - name: Commit README 進度更新
