@@ -1,0 +1,23 @@
+# CODEOWNERS — 建築自動化開源系統
+#
+# 規則：最後一條符合的規則優先（由上到下）
+# 頂層所有檔案：需要 @Fuyo0426 審核
+# Squad 資料夾：不指定擁有者（社群自行審核合併）
+
+# ── 預設：頂層架構由 Fuyo0426 管理 ──────────────────────
+*                           @Fuyo0426
+/.github/                   @Fuyo0426
+/docs/laws/                 @Fuyo0426
+
+# ── Squad 資料夾：開放社群貢獻，不需特定擁有者 ──────────
+/docs/squads/01_設計層_S03_法規智慧組/
+/docs/squads/01_設計層_S04_建築設計組/
+/docs/squads/01_設計層_S05_室內設計組/
+/docs/squads/01_設計層_S06_BIM技術組/
+/docs/squads/02_管理層_S07_案例管理組/
+/docs/squads/02_管理層_S08_永續節能組/
+/docs/squads/02_管理層_S09_行政整合組/
+/docs/squads/03_商業層_S10_行銷公關組/
+/docs/squads/03_商業層_S11_財務管理組/
+/docs/squads/03_商業層_S12_數據採集組/
+/docs/squads/04_核心層_IT_進化組/
