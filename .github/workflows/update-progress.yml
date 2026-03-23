@@ -1,0 +1,142 @@
+name: 更新首頁進度儀表板
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 掃描各功能執行狀態並更新 README
+        shell: bash
+        run: |
+          bar() {
+            local filled=$1 total=$2
+            local pct=$(( filled * 100 / total ))
+            local blocks=$(( filled * 10 / total ))
+            local bar=""
+            for i in $(seq 1 $blocks);  do bar="${bar}█"; done
+            for i in $(seq 1 $((10 - blocks))); do bar="${bar}░"; done
+            echo "${bar} ${pct}%"
+          }
+
+          # ── Squad 文件覆蓋率 ──────────────────────────────────────
+          SQUADS=(S03 S04 S05 S06 S07 S08 S09 S10 S11 S12 IT)
+          SQUAD_NAMES=("法規智慧組" "建築設計組" "室內設計組" "BIM技術組" "案例管理組" "永續節能組" "行政整合組" "行銷公關組" "財務管理組" "數據採集組" "進化組")
+          SQUAD_TOTAL=${#SQUADS[@]}
+          SQUAD_DONE=0
+
+          SQUAD_TABLE="| Squad | 名稱 | 文件數 | 狀態 |\n|-------|------|--------|------|\n"
+          for i in "${!SQUADS[@]}"; do
+            sid=${SQUADS[$i]}
+            name=${SQUAD_NAMES[$i]}
+            dir_lower=$(echo "$sid" | tr '[:upper:]' '[:lower:]')
+            count=$(find docs/squads -name "*${dir_lower}*" -o -name "*${sid}*" 2>/dev/null | wc -l)
+            count=$(( count + $(find docs/squads -name "*${name}*" 2>/dev/null | wc -l) ))
+            if [ "$count" -gt 0 ]; then
+              status="✅ 已建立"
+              SQUAD_DONE=$((SQUAD_DONE + 1))
+            else
+              status="⬜ 待建立"
+            fi
+            SQUAD_TABLE="${SQUAD_TABLE}| ${sid} | ${name} | ${count} | ${status} |\n"
+          done
+          SQUAD_PCT=$(( SQUAD_DONE * 100 / SQUAD_TOTAL ))
+
+          # ── 法規文件 ──────────────────────────────────────────────
+          LAW_COUNT=$(find docs/laws -name "*.md" ! -name "INDEX.md" 2>/dev/null | wc -l)
+          LAW_STATUS="⬜ 待建立"
+          [ "$LAW_COUNT" -gt 0 ] && LAW_STATUS="✅ ${LAW_COUNT} 份文件"
+
+          # ── Skills 模組 ───────────────────────────────────────────
+          SKILL_COUNT=$(find skills -name "*.py" 2>/dev/null | wc -l)
+          SKILL_STATUS="⬜ 尚無模組"
+          [ "$SKILL_COUNT" -gt 0 ] && SKILL_STATUS="✅ ${SKILL_COUNT} 個模組"
+
+          # ── Squad 程式模組 ────────────────────────────────────────
+          SQUAD_CODE=$(find squads -name "*.py" -o -name "*.json" 2>/dev/null | wc -l)
+          CODE_STATUS="⬜ 尚無模組"
+          [ "$SQUAD_CODE" -gt 0 ] && CODE_STATUS="✅ ${SQUAD_CODE} 個模組"
+
+          # ── 工具模組 ──────────────────────────────────────────────
+          TOOL_COUNT=$(find tools -name "*.py" 2>/dev/null | wc -l)
+          TOOL_STATUS="⬜ 尚無工具"
+          [ "$TOOL_COUNT" -gt 0 ] && TOOL_STATUS="✅ ${TOOL_COUNT} 個工具"
+
+          # ── Git 統計 ──────────────────────────────────────────────
+          TOTAL_COMMITS=$(git rev-list --count HEAD)
+          CONTRIBUTORS=$(git log --format='%ae' | sort -u | wc -l)
+          LAST_UPDATE=$(date '+%Y-%m-%d %H:%M UTC')
+
+          # ── 組合 PROGRESS 區塊 ────────────────────────────────────
+          SQUAD_BAR=$(bar $SQUAD_DONE $SQUAD_TOTAL)
+
+          BLOCK="<!-- PROGRESS_START -->
+          ## 📊 系統執行進度
+
+          > 自動更新於：${LAST_UPDATE} ｜ 總 Commits：${TOTAL_COMMITS} ｜ 貢獻者：${CONTRIBUTORS}
+
+          ### Squad 文件覆蓋率　\`${SQUAD_BAR}\`
+
+          $(echo -e "$SQUAD_TABLE")
+
+          ### 功能模組狀態
+
+          | 功能 | 狀態 | 說明 |
+          |------|------|------|
+          | 📋 法規文件庫 | ${LAW_STATUS} | \`docs/laws/\` |
+          | 🧠 Skills 模組 | ${SKILL_STATUS} | \`skills/\` |
+          | 🤖 Squad 程式模組 | ${CODE_STATUS} | \`squads/\` |
+          | 🔧 工具模組 | ${TOOL_STATUS} | \`tools/\` |
+
+          ### GitHub Actions 狀態
+
+          ![自動索引更新](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/auto-index.yml/badge.svg)
+          ![進化追蹤](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/evolution-tracker.yml/badge.svg)
+          ![進度儀表板](https://github.com/Fuyo0426/autoarch-opensource/actions/workflows/update-progress.yml/badge.svg)
+
+          <!-- PROGRESS_END -->"
+
+          # 寫入 README（替換兩個標記之間的內容）
+          python3 - <<PYEOF
+          import re, textwrap
+
+          with open('README.md', 'r', encoding='utf-8') as f:
+              content = f.read()
+
+          block = """$BLOCK"""
+          block = textwrap.dedent(block)
+
+          new_content = re.sub(
+              r'<!-- PROGRESS_START -->.*?<!-- PROGRESS_END -->',
+              block,
+              content,
+              flags=re.DOTALL
+          )
+
+          # 如果 README 還沒有標記，就附加在最後
+          if '<!-- PROGRESS_START -->' not in content:
+              new_content = content.rstrip() + '\n\n' + block + '\n'
+
+          with open('README.md', 'w', encoding='utf-8') as f:
+              f.write(new_content)
+
+          print('README updated.')
+          PYEOF
+
+      - name: Commit README 進度更新
+        run: |
+          git config user.name "Naomi Bot"
+          git config user.email "naomi-bot@autoarch"
+          git add README.md
+          git diff --staged --quiet || git commit -m "[Bot] 更新首頁執行進度儀表板"
+          git push

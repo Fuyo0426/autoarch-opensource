@@ -75,3 +75,7 @@ autoarch_opensource/
 ---
 
 *自動生成索引由 GitHub Actions 維護，無需手動更新。*
+
+<!-- PROGRESS_START -->
+<!-- 此區塊由 GitHub Actions 自動更新，請勿手動編輯 -->
+<!-- PROGRESS_END -->
