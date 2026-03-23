@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   update-index:
     runs-on: ubuntu-latest
@@ -16,9 +19,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.BOT_TOKEN }}
 
       - name: 更新法規索引
         run: |
+          mkdir -p docs/laws
           echo "# 法規文件索引" > docs/laws/INDEX.md
           echo "" >> docs/laws/INDEX.md
           echo "自動生成於：$(date '+%Y-%m-%d %H:%M')" >> docs/laws/INDEX.md
@@ -27,6 +32,7 @@ jobs:
           echo "|------|---------|" >> docs/laws/INDEX.md
           for f in docs/laws/*.md; do
             [ "$f" = "docs/laws/INDEX.md" ] && continue
+            [ -f "$f" ] || continue
             name=$(basename "$f")
             date=$(git log -1 --format="%ad" --date=short -- "$f" 2>/dev/null || echo "新增")
             echo "| [$name]($name) | $date |" >> docs/laws/INDEX.md
@@ -34,6 +40,7 @@ jobs:
 
       - name: 更新技能清單
         run: |
+          mkdir -p docs
           echo "# Skills 清單" > docs/SKILLS.md
           echo "" >> docs/SKILLS.md
           echo "自動生成於：$(date '+%Y-%m-%d %H:%M')" >> docs/SKILLS.md
