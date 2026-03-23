@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
+- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 更新系統進化狀態** (Naomi Bot)
@@ -48,5 +50,3 @@
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[Bot] 修正 workflow：使用 BOT_TOKEN 繞過分支保護 + 升級 Node.js 24** (Jack Chang)
