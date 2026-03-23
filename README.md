@@ -1,4 +1,4 @@
-# 建築自動化 — Naomi AI System
+# 建築自動化　開源系統
 
 > Naomi V21 建築事務所 AI 平台。LINE Bot + FastAPI + 多智能體架構。
 
