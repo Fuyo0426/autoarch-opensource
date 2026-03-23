@@ -5,7 +5,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-if: "!startsWith(github.event.head_commit.message, '[Bot]')"
 
 concurrency:
   group: bot-push
@@ -19,6 +18,7 @@ env:
 
 jobs:
   update-readme:
+    if: "!startsWith(github.event.head_commit.message, '[Bot]')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

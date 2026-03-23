@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
 
 # Bot commit 不觸發，避免無限迴圈
-if: "!startsWith(github.event.head_commit.message, '[Bot]')"
 
 concurrency:
   group: bot-push
@@ -20,6 +19,7 @@ env:
 
 jobs:
   update-index:
+    if: "!startsWith(github.event.head_commit.message, '[Bot]')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
