@@ -89,6 +89,7 @@ except ImportError:
 from fastapi import FastAPI, Request, BackgroundTasks, HTTPException, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.security import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from linebot.v3 import WebhookHandler
 from linebot.v3.messaging import (
@@ -212,6 +213,19 @@ async def _lifespan(app):
     # shutdown（如有需要可在此加清理邏輯）
 
 app = FastAPI(title="Naomi 建築事務所 AI — V21.1", version="21.1", lifespan=_lifespan)
+
+# ── CORS（允許 GitHub Pages 前端與本地開發呼叫 API）────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://fuyo0426.github.io",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:5500",   # VS Code Live Server
+    ],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 # ── 檔案下載暫存（token → file_path，支援 DXF / Excel / 任意格式）──────────
 import secrets as _secrets
