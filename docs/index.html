@@ -123,31 +123,10 @@
     .squad-item.active .squad-dot { background: var(--accent); opacity: 1; }
 
     .sidebar-footer {
-      padding: 16px;
+      padding: 12px 16px;
       border-top: 1px solid oklch(30% 0.05 265 / 0.5);
       margin-top: auto;
     }
-
-    .endpoint-input {
-      width: 100%;
-      background: oklch(28% 0.06 265 / 0.6);
-      border: 1px solid oklch(35% 0.05 265);
-      color: var(--navy-text);
-      font-family: 'Outfit', sans-serif; font-size: 0.75rem;
-      padding: 7px 10px; outline: none; transition: border 0.15s;
-    }
-    .endpoint-input::placeholder { color: var(--navy-muted); }
-    .endpoint-input:focus { border-color: oklch(50% 0.06 265); }
-
-    .btn-connect {
-      width: 100%; margin-top: 8px; padding: 7px;
-      background: var(--accent); border: none;
-      color: white; font-family: 'Outfit', sans-serif;
-      font-size: 0.75rem; font-weight: 500;
-      letter-spacing: 0.05em; text-transform: uppercase;
-      cursor: pointer; transition: opacity 0.15s;
-    }
-    .btn-connect:hover { opacity: 0.85; }
 
     /* MAIN */
     .main { display: flex; flex-direction: column; overflow: hidden; background: var(--paper); }
@@ -351,11 +330,6 @@
         <div class="squad-dot"></div>財務管理組
       </div>
     </div>
-    <div class="sidebar-footer">
-      <div class="sidebar-label">後端連線</div>
-      <input class="endpoint-input" id="endpointInput" placeholder="http://localhost:8000">
-      <button class="btn-connect" onclick="checkConnection()">連線測試</button>
-    </div>
   </aside>
 
   <!-- MAIN -->
@@ -446,7 +420,6 @@
 
   // ── BOOT ─────────────────────────────────────────────
   addEventListener('DOMContentLoaded', () => {
-    document.getElementById('endpointInput').value    = S.endpoint;
     document.getElementById('settingEndpoint').value  = S.endpoint;
     document.getElementById('settingUserId').value    = S.userId;
     document.getElementById('settingRole').value      = S.role;
@@ -456,9 +429,7 @@
 
   // ── CONNECTION ───────────────────────────────────────
   async function checkConnection() {
-    const ep = document.getElementById('endpointInput').value.trim();
-    S.endpoint = ep;
-    localStorage.setItem('aa_endpoint', ep);
+    const ep = S.endpoint;
     setStatus('connecting');
 
     try {
@@ -650,7 +621,6 @@
     localStorage.setItem('aa_endpoint', S.endpoint);
     localStorage.setItem('aa_userId',   S.userId);
     localStorage.setItem('aa_role',     S.role);
-    document.getElementById('endpointInput').value = S.endpoint;
     document.getElementById('settingsOverlay').classList.remove('open');
     checkConnection();
     toast('設定已儲存');
