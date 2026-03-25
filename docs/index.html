@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoArch — AI 建築顧問系統</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,600;1,300&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper: oklch(97.5% 0.008 75);
+      --paper-grid: oklch(91% 0.007 265 / 0.45);
+      --ink: oklch(16% 0.04 265);
+      --ink-mid: oklch(42% 0.03 265);
+      --ink-faint: oklch(72% 0.02 265);
+      --navy: oklch(22% 0.07 265);
+      --navy-hover: oklch(27% 0.07 265);
+      --navy-text: oklch(80% 0.04 265);
+      --navy-muted: oklch(50% 0.04 265);
+      --accent: oklch(52% 0.17 28);
+      --accent-bg: oklch(97% 0.03 28);
+      --success: oklch(52% 0.13 145);
+      --border: oklch(87% 0.01 265);
+      --sidebar-w: 220px;
+      --header-h: 52px;
+    }
+
+    html, body { height: 100%; font-family: 'Outfit', sans-serif; font-weight: 400; color: var(--ink); background: var(--paper); overflow: hidden; }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--paper-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* LAYOUT */
+    .layout {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-rows: var(--header-h) 1fr;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      grid-column: 1 / -1;
+      display: flex; align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--paper);
+      gap: 16px;
+    }
+
+    .brand {
+      font-family: 'Cormorant', serif;
+      font-size: 1.5rem; font-weight: 600;
+      letter-spacing: -0.01em; color: var(--ink); flex: 1;
+    }
+    .brand span { color: var(--accent); }
+
+    .status-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.72rem; font-weight: 500;
+      color: var(--ink-mid);
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--ink-faint); transition: background 0.3s;
+    }
+    .status-dot.online { background: var(--success); }
+    .status-dot.error  { background: var(--accent); }
+
+    .btn-icon {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border); background: transparent;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--ink-mid); font-size: 0.9rem; transition: all 0.15s;
+    }
+    .btn-icon:hover { background: var(--border); color: var(--ink); }
+
+    /* SIDEBAR */
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: var(--navy);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    .sidebar-section { padding: 20px 16px 12px; }
+
+    .sidebar-label {
+      font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--navy-muted); margin-bottom: 10px;
+    }
+
+    .squad-list { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; padding: 0 16px; }
+
+    .squad-item {
+      padding: 8px 12px; cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      color: var(--navy-muted); font-size: 0.82rem; font-weight: 400;
+      transition: all 0.15s; border-left: 2px solid transparent;
+    }
+    .squad-item:hover { background: oklch(30% 0.06 265 / 0.5); color: var(--navy-text); }
+    .squad-item.active {
+      background: oklch(30% 0.06 265 / 0.8);
+      color: oklch(92% 0.04 265);
+      border-left-color: var(--accent);
+    }
+
+    .squad-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; opacity: 0.5; }
+    .squad-item.active .squad-dot { background: var(--accent); opacity: 1; }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid oklch(30% 0.05 265 / 0.5);
+      margin-top: auto;
+    }
+
+    .endpoint-input {
+      width: 100%;
+      background: oklch(28% 0.06 265 / 0.6);
+      border: 1px solid oklch(35% 0.05 265);
+      color: var(--navy-text);
+      font-family: 'Outfit', sans-serif; font-size: 0.75rem;
+      padding: 7px 10px; outline: none; transition: border 0.15s;
+    }
+    .endpoint-input::placeholder { color: var(--navy-muted); }
+    .endpoint-input:focus { border-color: oklch(50% 0.06 265); }
+
+    .btn-connect {
+      width: 100%; margin-top: 8px; padding: 7px;
+      background: var(--accent); border: none;
+      color: white; font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem; font-weight: 500;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .btn-connect:hover { opacity: 0.85; }
+
+    /* MAIN */
+    .main { display: flex; flex-direction: column; overflow: hidden; background: var(--paper); }
+
+    .squad-header {
+      padding: 14px 24px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: baseline; gap: 12px;
+    }
+    .squad-name { font-family: 'Cormorant', serif; font-size: 1.15rem; font-weight: 600; }
+    .squad-desc { font-size: 0.78rem; color: var(--ink-mid); }
+
+    /* MESSAGES */
+    .messages {
+      flex: 1; overflow-y: auto;
+      padding: 24px; display: flex; flex-direction: column; gap: 20px;
+      scroll-behavior: smooth;
+    }
+
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; color: var(--ink-faint); text-align: center; padding: 40px;
+    }
+    .empty-title { font-family: 'Cormorant', serif; font-size: 1.9rem; font-weight: 300; font-style: italic; color: var(--ink-mid); }
+    .empty-sub { font-size: 0.82rem; color: var(--ink-faint); max-width: 340px; line-height: 1.65; margin-top: 4px; }
+
+    .sample-queries { display: flex; flex-direction: column; gap: 6px; margin-top: 20px; width: 100%; max-width: 400px; }
+    .sample-query {
+      padding: 10px 14px; border: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--ink-mid); cursor: pointer;
+      transition: all 0.15s; text-align: left;
+      background: transparent; font-family: 'Outfit', sans-serif;
+    }
+    .sample-query:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+
+    /* Messages */
+    .msg { display: flex; flex-direction: column; max-width: 74%; gap: 4px; animation: msgIn 0.2s ease-out; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .msg.user  { align-self: flex-end;   align-items: flex-end; }
+    .msg.assistant { align-self: flex-start; align-items: flex-start; }
+
+    .msg-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+
+    .msg-bubble { padding: 12px 16px; font-size: 0.875rem; line-height: 1.68; white-space: pre-wrap; word-break: break-word; }
+    .msg.user      .msg-bubble { background: var(--navy); color: oklch(90% 0.03 265); }
+    .msg.assistant .msg-bubble { background: white; border: 1px solid var(--border); color: var(--ink); }
+
+    /* Typing */
+    .typing { display: flex; gap: 5px; padding: 14px 16px; background: white; border: 1px solid var(--border); align-self: flex-start; }
+    .typing-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-faint); animation: typingPulse 1.2s ease-in-out infinite; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingPulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+
+    /* FILE INDICATOR */
+    .file-indicator {
+      display: none; align-items: center; gap: 8px;
+      padding: 8px 14px; background: var(--accent-bg);
+      border: 1px solid var(--accent);
+      font-size: 0.78rem; color: var(--accent);
+      margin: 0 24px 8px;
+    }
+    .file-indicator.visible { display: flex; }
+    .file-remove { margin-left: auto; cursor: pointer; opacity: 0.6; }
+    .file-remove:hover { opacity: 1; }
+
+    /* INPUT */
+    .input-area {
+      border-top: 1px solid var(--border);
+      padding: 16px 24px; display: flex; gap: 10px;
+      align-items: flex-end; background: var(--paper);
+    }
+
+    .input-wrap { flex: 1; }
+
+    .chat-input {
+      width: 100%; border: 1px solid var(--border); background: white;
+      font-family: 'Outfit', sans-serif; font-size: 0.875rem; color: var(--ink);
+      padding: 10px 14px; resize: none; outline: none;
+      min-height: 42px; max-height: 120px; line-height: 1.5; transition: border 0.15s;
+    }
+    .chat-input:focus { border-color: var(--navy); }
+    .chat-input::placeholder { color: var(--ink-faint); }
+
+    .btn-upload {
+      width: 42px; height: 42px; border: 1px solid var(--border);
+      background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ink-mid); font-size: 0.9rem; transition: all 0.15s; flex-shrink: 0;
+    }
+    .btn-upload:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+
+    .btn-send {
+      width: 42px; height: 42px; background: var(--navy); border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--navy-text); font-size: 1rem; transition: background 0.15s; flex-shrink: 0;
+    }
+    .btn-send:hover { background: var(--navy-hover); }
+    .btn-send:disabled { opacity: 0.4; cursor: default; }
+
+    /* SETTINGS PANEL */
+    .settings-overlay {
+      position: fixed; inset: 0;
+      background: oklch(16% 0.04 265 / 0.45);
+      z-index: 100; display: none; align-items: flex-start; justify-content: flex-end;
+      padding-top: var(--header-h);
+    }
+    .settings-overlay.open { display: flex; }
+
+    .settings-panel {
+      width: 300px; background: var(--paper);
+      border-left: 1px solid var(--border);
+      height: calc(100vh - var(--header-h));
+      padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;
+    }
+
+    .settings-title { font-family: 'Cormorant', serif; font-size: 1.2rem; font-weight: 600; }
+
+    .setting-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .setting-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+
+    .setting-input {
+      width: 100%; border: 1px solid var(--border); background: white;
+      font-family: 'Outfit', sans-serif; font-size: 0.82rem; color: var(--ink);
+      padding: 8px 12px; outline: none; transition: border 0.15s;
+      -webkit-appearance: none;
+    }
+    .setting-input:focus { border-color: var(--navy); }
+
+    .btn-save {
+      padding: 9px 20px; background: var(--navy); border: none;
+      color: var(--navy-text); font-family: 'Outfit', sans-serif;
+      font-size: 0.78rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;
+      cursor: pointer; transition: opacity 0.15s; align-self: flex-start;
+    }
+    .btn-save:hover { opacity: 0.85; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 10px 16px; background: var(--navy);
+      color: var(--navy-text); font-size: 0.8rem;
+      z-index: 200; display: none;
+      animation: toastIn 0.2s ease-out;
+    }
+    .toast.visible { display: block; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* SCROLLBAR */
+    .messages::-webkit-scrollbar { width: 3px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); }
+
+    /* MOBILE */
+    @media (max-width: 680px) {
+      :root { --sidebar-w: 0px; }
+      .sidebar { display: none; }
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">Auto<span>Arch</span></div>
+    <div class="status-row">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">離線</span>
+    </div>
+    <button class="btn-icon" onclick="toggleSettings()" title="設定">⚙</button>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Squad</div>
+    </div>
+    <div class="squad-list" id="squadList">
+      <div class="squad-item active" data-squad="" data-name="全域諮詢" data-desc="自動路由至最適合的專業組別">
+        <div class="squad-dot"></div>全域諮詢
+      </div>
+      <div class="squad-item" data-squad="s03" data-name="法規智慧組" data-desc="容積率、建蔽率、建築法規查詢">
+        <div class="squad-dot"></div>法規智慧組
+      </div>
+      <div class="squad-item" data-squad="s04" data-name="建築設計組" data-desc="量體策略、外觀設計諮詢">
+        <div class="squad-dot"></div>建築設計組
+      </div>
+      <div class="squad-item" data-squad="s05" data-name="室內設計組" data-desc="室內規劃設計">
+        <div class="squad-dot"></div>室內設計組
+      </div>
+      <div class="squad-item" data-squad="s06" data-name="BIM 技術組" data-desc="Revit、IFC、碰撞偵測">
+        <div class="squad-dot"></div>BIM 技術組
+      </div>
+      <div class="squad-item" data-squad="s08" data-name="永續節能組" data-desc="EEWH 認證、ESG 指標">
+        <div class="squad-dot"></div>永續節能組
+      </div>
+      <div class="squad-item" data-squad="s11" data-name="財務管理組" data-desc="工程造價估算、ROI 試算">
+        <div class="squad-dot"></div>財務管理組
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-label">後端連線</div>
+      <input class="endpoint-input" id="endpointInput" placeholder="http://localhost:8000">
+      <button class="btn-connect" onclick="checkConnection()">連線測試</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="squad-header">
+      <div class="squad-name" id="squadName">全域諮詢</div>
+      <div class="squad-desc" id="squadDesc">自動路由至最適合的專業組別</div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-title">建築智識，隨時待命</div>
+        <div class="empty-sub">選擇左側 Squad，或直接提問，系統自動路由至最適合的專業組別。</div>
+        <div class="sample-queries">
+          <button class="sample-query" onclick="useQuery(this)">這棟建築的容積率上限是多少？</button>
+          <button class="sample-query" onclick="useQuery(this)">15 層 RC 建築的工程造價估算</button>
+          <button class="sample-query" onclick="useQuery(this)">EEWH 銀級認證需要哪些條件？</button>
+          <button class="sample-query" onclick="useQuery(this)">IFC 模型的碰撞偵測流程</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="file-indicator" id="fileIndicator">
+      <span>📎</span>
+      <span id="fileName"></span>
+      <span class="file-remove" onclick="clearFile()">✕</span>
+    </div>
+
+    <div class="input-area">
+      <label class="btn-upload" title="上傳檔案">
+        <input type="file" id="fileInput" style="display:none" onchange="handleFileSelect(this)">
+        📎
+      </label>
+      <div class="input-wrap">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          placeholder="輸入問題或指令…"
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+      </div>
+      <button class="btn-send" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+  </main>
+</div>
+
+<!-- SETTINGS -->
+<div class="settings-overlay" id="settingsOverlay" onclick="overlayClick(event)">
+  <div class="settings-panel">
+    <div class="settings-title">設定</div>
+    <div class="setting-group">
+      <label class="setting-label">後端 API 位址</label>
+      <input class="setting-input" id="settingEndpoint" placeholder="http://localhost:8000">
+    </div>
+    <div class="setting-group">
+      <label class="setting-label">用戶 ID</label>
+      <input class="setting-input" id="settingUserId" placeholder="web_user">
+    </div>
+    <div class="setting-group">
+      <label class="setting-label">角色</label>
+      <select class="setting-input" id="settingRole">
+        <option value="guest">訪客</option>
+        <option value="general">一般用戶</option>
+        <option value="tier_basic">基礎方案</option>
+        <option value="tier_mid">進階方案</option>
+        <option value="tier_pro">旗艦方案</option>
+        <option value="admin" selected>管理員</option>
+      </select>
+    </div>
+    <button class="btn-save" onclick="saveSettings()">儲存設定</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── STATE ────────────────────────────────────────────
+  const S = {
+    endpoint: localStorage.getItem('aa_endpoint') || 'http://localhost:8000',
+    userId:   localStorage.getItem('aa_userId')   || 'web_user',
+    role:     localStorage.getItem('aa_role')     || 'admin',
+    squad: '',
+    file: null,
+    busy: false,
+  };
+
+  // ── BOOT ─────────────────────────────────────────────
+  addEventListener('DOMContentLoaded', () => {
+    document.getElementById('endpointInput').value    = S.endpoint;
+    document.getElementById('settingEndpoint').value  = S.endpoint;
+    document.getElementById('settingUserId').value    = S.userId;
+    document.getElementById('settingRole').value      = S.role;
+    checkConnection();
+    bindSquads();
+  });
+
+  // ── CONNECTION ───────────────────────────────────────
+  async function checkConnection() {
+    const ep = document.getElementById('endpointInput').value.trim();
+    S.endpoint = ep;
+    localStorage.setItem('aa_endpoint', ep);
+    setStatus('connecting');
+
+    try {
+      const r = await fetch(`${ep}/health`, { signal: AbortSignal.timeout(5000) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      setStatus('online', `V${d.version || '21'} — 線上`);
+      toast('連線成功');
+      fetchSquads(ep);
+    } catch (e) {
+      setStatus('error', `離線`);
+      toast(`無法連線：${e.message}，請確認後端與 CORS 設定`, 4500);
+    }
+  }
+
+  function setStatus(state, label) {
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+    dot.className = 'status-dot' + (state === 'online' ? ' online' : state === 'error' ? ' error' : '');
+    txt.textContent = label || (state === 'connecting' ? '連線中…' : '離線');
+  }
+
+  // ── SQUADS ───────────────────────────────────────────
+  async function fetchSquads(ep) {
+    try {
+      const r = await fetch(`${ep}/api/squads`);
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d.squads?.length) renderSquads(d.squads);
+    } catch {}
+  }
+
+  function renderSquads(squads) {
+    const list = document.getElementById('squadList');
+    list.innerHTML = `
+      <div class="squad-item active" data-squad="" data-name="全域諮詢" data-desc="自動路由至最適合的專業組別">
+        <div class="squad-dot"></div>全域諮詢
+      </div>
+    `;
+    squads.forEach(s => {
+      const el = Object.assign(document.createElement('div'), {
+        className: 'squad-item',
+        innerHTML: `<div class="squad-dot"></div>${s.name}`
+      });
+      Object.assign(el.dataset, {
+        squad: s.key,
+        name: s.name,
+        desc: (s.triggers || []).slice(0, 2).join('、') || s.name
+      });
+      list.appendChild(el);
+    });
+    bindSquads();
+  }
+
+  function bindSquads() {
+    document.querySelectorAll('.squad-item').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.squad-item').forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
+        S.squad = el.dataset.squad || '';
+        document.getElementById('squadName').textContent = el.dataset.name;
+        document.getElementById('squadDesc').textContent = el.dataset.desc || '';
+        document.getElementById('chatInput').focus();
+      });
+    });
+  }
+
+  // ── SEND ─────────────────────────────────────────────
+  async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const text  = input.value.trim();
+    if ((!text && !S.file) || S.busy) return;
+
+    input.value = '';
+    input.style.height = 'auto';
+    hideEmpty();
+    S.busy = true;
+    document.getElementById('sendBtn').disabled = true;
+
+    addMsg('user', text || `📎 ${S.file.name}`);
+    const typing = showTyping();
+
+    try {
+      let answer;
+      if (S.file) {
+        const fd = new FormData();
+        fd.append('user_id', S.userId);
+        fd.append('message', text || '請分析此檔案');
+        fd.append('file', S.file);
+        const r = await fetch(`${S.endpoint}/test/upload`, { method: 'POST', body: fd });
+        answer = (await r.json()).answer || '（無回應）';
+        clearFile();
+      } else {
+        const msg = S.squad ? `[${S.squad}] ${text}` : text;
+        const r = await fetch(`${S.endpoint}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: S.userId, message: msg, role: S.role, context: {} })
+        });
+        answer = (await r.json()).answer || '（無回應）';
+      }
+      typing.remove();
+      addMsg('assistant', answer);
+    } catch (e) {
+      typing.remove();
+      addMsg('assistant', `⚠ 連線錯誤：${e.message}\n\n請確認後端正在運行，並已設定 CORS Allow-Origin。`);
+    }
+
+    S.busy = false;
+    document.getElementById('sendBtn').disabled = false;
+    input.focus();
+  }
+
+  // ── DOM HELPERS ──────────────────────────────────────
+  function addMsg(role, text) {
+    const msgs = document.getElementById('messages');
+    const el = document.createElement('div');
+    el.className = `msg ${role}`;
+    el.innerHTML = `
+      <div class="msg-label">${role === 'user' ? '您' : 'AutoArch'}</div>
+      <div class="msg-bubble">${esc(text)}</div>
+    `;
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function showTyping() {
+    const msgs = document.getElementById('messages');
+    const el = document.createElement('div');
+    el.className = 'typing';
+    el.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+    return el;
+  }
+
+  function hideEmpty() {
+    const e = document.getElementById('emptyState');
+    if (e) e.style.display = 'none';
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  }
+
+  // ── FILE ─────────────────────────────────────────────
+  function handleFileSelect(el) {
+    if (el.files[0]) {
+      S.file = el.files[0];
+      document.getElementById('fileName').textContent = S.file.name;
+      document.getElementById('fileIndicator').classList.add('visible');
+    }
+  }
+
+  function clearFile() {
+    S.file = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileIndicator').classList.remove('visible');
+  }
+
+  // ── INPUT ────────────────────────────────────────────
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function useQuery(btn) {
+    document.getElementById('chatInput').value = btn.textContent;
+    sendMessage();
+  }
+
+  // ── SETTINGS ─────────────────────────────────────────
+  function toggleSettings() {
+    document.getElementById('settingsOverlay').classList.toggle('open');
+  }
+
+  function overlayClick(e) {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  }
+
+  function saveSettings() {
+    S.endpoint = document.getElementById('settingEndpoint').value.trim();
+    S.userId   = document.getElementById('settingUserId').value.trim() || 'web_user';
+    S.role     = document.getElementById('settingRole').value;
+    localStorage.setItem('aa_endpoint', S.endpoint);
+    localStorage.setItem('aa_userId',   S.userId);
+    localStorage.setItem('aa_role',     S.role);
+    document.getElementById('endpointInput').value = S.endpoint;
+    document.getElementById('settingsOverlay').classList.remove('open');
+    checkConnection();
+    toast('設定已儲存');
+  }
+
+  // ── TOAST ────────────────────────────────────────────
+  let _tt;
+  function toast(msg, ms = 2500) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('visible');
+    clearTimeout(_tt);
+    _tt = setTimeout(() => el.classList.remove('visible'), ms);
+  }
+</script>
+</body>
+</html>
