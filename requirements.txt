@@ -1,0 +1,31 @@
+# AutoArch — Naomi V21 依賴清單
+# 安裝：pip install -r requirements.txt
+
+# Web 框架
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.0.0
+python-multipart>=0.0.9
+
+# 環境與工具
+python-dotenv>=1.0.0
+requests>=2.31.0
+psutil>=5.9.0
+httpx>=0.27.0
+
+# LINE Bot
+line-bot-sdk>=3.0.0
+
+# 向量資料庫（法規 RAG）
+chromadb>=0.5.0
+
+# LLM 客戶端（任一可用即可，其餘留空 API Key 不影響啟動）
+groq>=0.9.0
+openai>=1.30.0
+anthropic>=0.30.0
+
+# 文件解析
+pypdf>=4.0.0
+PyMuPDF>=1.24.0
+python-docx>=1.1.0
+openpyxl>=3.1.0
