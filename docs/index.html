@@ -22,8 +22,9 @@
       --accent: oklch(52% 0.17 28);
       --accent-bg: oklch(97% 0.03 28);
       --success: oklch(52% 0.13 145);
+      --warn: oklch(68% 0.15 75);
       --border: oklch(87% 0.01 265);
-      --sidebar-w: 220px;
+      --sidebar-w: 240px;
       --header-h: 52px;
     }
 
@@ -31,14 +32,12 @@
 
     body::before {
       content: '';
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background-image:
         linear-gradient(var(--paper-grid) 1px, transparent 1px),
         linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px);
       background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
+      pointer-events: none; z-index: 0;
     }
 
     /* LAYOUT */
@@ -73,11 +72,7 @@
       color: var(--ink-mid);
       letter-spacing: 0.04em; text-transform: uppercase;
     }
-
-    .status-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--ink-faint); transition: background 0.3s;
-    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); transition: background 0.3s; }
     .status-dot.online { background: var(--success); }
     .status-dot.error  { background: var(--accent); }
 
@@ -96,20 +91,23 @@
       display: flex; flex-direction: column; overflow: hidden;
     }
 
-    .sidebar-section { padding: 20px 16px 12px; }
+    .squad-list {
+      flex: 1; overflow-y: auto;
+      padding: 8px 0 8px;
+    }
+    .squad-list::-webkit-scrollbar { width: 2px; }
+    .squad-list::-webkit-scrollbar-thumb { background: oklch(35% 0.05 265); }
 
-    .sidebar-label {
-      font-size: 0.65rem; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--navy-muted); margin-bottom: 10px;
+    .squad-section-label {
+      font-size: 0.6rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--navy-muted); padding: 14px 16px 4px;
     }
 
-    .squad-list { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; padding: 0 16px; }
-
     .squad-item {
-      padding: 8px 12px; cursor: pointer;
-      display: flex; align-items: center; gap: 10px;
-      color: var(--navy-muted); font-size: 0.82rem; font-weight: 400;
+      padding: 7px 16px; cursor: pointer;
+      display: flex; align-items: center; gap: 9px;
+      color: var(--navy-muted); font-size: 0.8rem; font-weight: 400;
       transition: all 0.15s; border-left: 2px solid transparent;
     }
     .squad-item:hover { background: oklch(30% 0.06 265 / 0.5); color: var(--navy-text); }
@@ -118,25 +116,38 @@
       color: oklch(92% 0.04 265);
       border-left-color: var(--accent);
     }
+    .squad-item.boss {
+      color: oklch(78% 0.12 75);
+      font-weight: 500;
+    }
+    .squad-item.boss.active { border-left-color: oklch(78% 0.12 75); }
+    .squad-item.boss:hover { color: oklch(88% 0.12 75); }
 
     .squad-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; opacity: 0.5; }
-    .squad-item.active .squad-dot { background: var(--accent); opacity: 1; }
+    .squad-item.active .squad-dot { opacity: 1; }
+    .squad-item.boss .squad-dot { background: oklch(78% 0.12 75); opacity: 0.8; }
 
     .sidebar-footer {
-      padding: 12px 16px;
+      padding: 10px 16px;
       border-top: 1px solid oklch(30% 0.05 265 / 0.5);
-      margin-top: auto;
+      font-size: 0.68rem; color: var(--navy-muted);
     }
+    .footer-count { font-weight: 600; color: oklch(55% 0.05 265); }
 
     /* MAIN */
     .main { display: flex; flex-direction: column; overflow: hidden; background: var(--paper); }
 
     .squad-header {
-      padding: 14px 24px; border-bottom: 1px solid var(--border);
+      padding: 12px 24px; border-bottom: 1px solid var(--border);
       display: flex; align-items: baseline; gap: 12px;
     }
-    .squad-name { font-family: 'Cormorant', serif; font-size: 1.15rem; font-weight: 600; }
-    .squad-desc { font-size: 0.78rem; color: var(--ink-mid); }
+    .squad-name { font-family: 'Cormorant', serif; font-size: 1.1rem; font-weight: 600; }
+    .squad-badge {
+      font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 2px 7px; background: var(--accent-bg); color: var(--accent);
+    }
+    .squad-badge.boss-badge { background: oklch(97% 0.04 75); color: oklch(52% 0.15 75); }
+    .squad-desc { font-size: 0.76rem; color: var(--ink-mid); margin-left: auto; }
 
     /* MESSAGES */
     .messages {
@@ -144,6 +155,8 @@
       padding: 24px; display: flex; flex-direction: column; gap: 20px;
       scroll-behavior: smooth;
     }
+    .messages::-webkit-scrollbar { width: 3px; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); }
 
     .empty-state {
       flex: 1; display: flex; flex-direction: column;
@@ -162,17 +175,87 @@
     }
     .sample-query:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 
+    /* PERMIT FORM (S26) */
+    .permit-form {
+      display: none;
+      flex: 1; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 24px; gap: 20px;
+    }
+    .permit-form.visible { display: flex; }
+
+    .permit-title {
+      font-family: 'Cormorant', serif; font-size: 1.6rem; font-weight: 600;
+      color: var(--ink); text-align: center;
+    }
+    .permit-sub {
+      font-size: 0.8rem; color: var(--ink-mid); text-align: center; max-width: 460px; line-height: 1.6;
+    }
+
+    .permit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px; width: 100%; max-width: 540px;
+    }
+    .permit-field { display: flex; flex-direction: column; gap: 5px; }
+    .permit-field.span2 { grid-column: 1 / -1; }
+    .permit-label {
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid);
+    }
+    .permit-input, .permit-select {
+      border: 1px solid var(--border); background: white;
+      font-family: 'Outfit', sans-serif; font-size: 0.82rem; color: var(--ink);
+      padding: 8px 12px; outline: none; transition: border 0.15s;
+      -webkit-appearance: none;
+    }
+    .permit-input:focus, .permit-select:focus { border-color: var(--navy); }
+    .permit-select { cursor: pointer; }
+
+    .btn-permit {
+      padding: 11px 28px; background: var(--navy); border: none;
+      color: var(--navy-text); font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.15s; align-self: center;
+    }
+    .btn-permit:hover { background: var(--navy-hover); }
+
     /* Messages */
-    .msg { display: flex; flex-direction: column; max-width: 74%; gap: 4px; animation: msgIn 0.2s ease-out; }
+    .msg { display: flex; flex-direction: column; max-width: 78%; gap: 4px; animation: msgIn 0.2s ease-out; }
     @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .msg.user  { align-self: flex-end;   align-items: flex-end; }
-    .msg.assistant { align-self: flex-start; align-items: flex-start; }
+    .msg.assistant { align-self: flex-start; align-items: flex-start; max-width: 86%; }
 
     .msg-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
 
-    .msg-bubble { padding: 12px 16px; font-size: 0.875rem; line-height: 1.68; white-space: pre-wrap; word-break: break-word; }
-    .msg.user      .msg-bubble { background: var(--navy); color: oklch(90% 0.03 265); }
+    .msg-bubble { padding: 12px 16px; font-size: 0.875rem; line-height: 1.7; word-break: break-word; }
+    .msg.user      .msg-bubble { background: var(--navy); color: oklch(90% 0.03 265); white-space: pre-wrap; }
     .msg.assistant .msg-bubble { background: white; border: 1px solid var(--border); color: var(--ink); }
+
+    /* Markdown rendered content */
+    .msg-bubble h1, .msg-bubble h2, .msg-bubble h3 {
+      font-family: 'Cormorant', serif; margin: 14px 0 6px;
+    }
+    .msg-bubble h1 { font-size: 1.25rem; font-weight: 600; }
+    .msg-bubble h2 { font-size: 1.05rem; font-weight: 600; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    .msg-bubble h3 { font-size: 0.95rem; font-weight: 600; }
+    .msg-bubble p { margin: 6px 0; }
+    .msg-bubble ul, .msg-bubble ol { padding-left: 18px; margin: 6px 0; }
+    .msg-bubble li { margin: 3px 0; }
+    .msg-bubble code { font-family: monospace; font-size: 0.82em; background: var(--accent-bg); padding: 1px 5px; }
+    .msg-bubble pre { background: oklch(95% 0.005 265); border: 1px solid var(--border); padding: 12px; margin: 8px 0; overflow-x: auto; }
+    .msg-bubble pre code { background: none; padding: 0; }
+    .msg-bubble strong { font-weight: 600; }
+    .msg-bubble em { font-style: italic; }
+    .msg-bubble hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+    .msg-bubble table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 0.82rem; }
+    .msg-bubble th { background: oklch(93% 0.008 265); font-weight: 600; }
+    .msg-bubble th, .msg-bubble td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+    .msg-bubble blockquote { border-left: 3px solid var(--accent); padding: 6px 12px; margin: 8px 0; color: var(--ink-mid); font-style: italic; }
+
+    /* Status icons inline */
+    .check-pass { color: oklch(48% 0.14 145); font-weight: 600; }
+    .check-warn { color: oklch(55% 0.16 75); font-weight: 600; }
+    .check-fail { color: oklch(50% 0.18 28); font-weight: 600; }
 
     /* Typing */
     .typing { display: flex; gap: 5px; padding: 14px 16px; background: white; border: 1px solid var(--border); align-self: flex-start; }
@@ -199,9 +282,7 @@
       padding: 16px 24px; display: flex; gap: 10px;
       align-items: flex-end; background: var(--paper);
     }
-
     .input-wrap { flex: 1; }
-
     .chat-input {
       width: 100%; border: 1px solid var(--border); background: white;
       font-family: 'Outfit', sans-serif; font-size: 0.875rem; color: var(--ink);
@@ -242,13 +323,9 @@
       height: calc(100vh - var(--header-h));
       padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;
     }
-
     .settings-title { font-family: 'Cormorant', serif; font-size: 1.2rem; font-weight: 600; }
-
     .setting-group { display: flex; flex-direction: column; gap: 6px; }
-
     .setting-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
-
     .setting-input {
       width: 100%; border: 1px solid var(--border); background: white;
       font-family: 'Outfit', sans-serif; font-size: 0.82rem; color: var(--ink);
@@ -256,7 +333,8 @@
       -webkit-appearance: none;
     }
     .setting-input:focus { border-color: var(--navy); }
-
+    .setting-hint { font-size: 0.7rem; color: var(--ink-faint); line-height: 1.5; }
+    .setting-divider { border: none; border-top: 1px solid var(--border); }
     .btn-save {
       padding: 9px 20px; background: var(--navy); border: none;
       color: var(--navy-text); font-family: 'Outfit', sans-serif;
@@ -275,11 +353,6 @@
     }
     .toast.visible { display: block; }
     @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-
-    /* SCROLLBAR */
-    .messages::-webkit-scrollbar { width: 3px; }
-    .messages::-webkit-scrollbar-track { background: transparent; }
-    .messages::-webkit-scrollbar-thumb { background: var(--border); }
 
     /* MOBILE */
     @media (max-width: 680px) {
@@ -304,15 +377,24 @@
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Squad</div>
-    </div>
     <div class="squad-list" id="squadList">
+
+      <!-- BossAgent -->
+      <div class="squad-section-label">旗艦功能</div>
+      <div class="squad-item boss" data-squad="s26" data-name="建照審查加速組" data-desc="BossAgent — 協調六大專業，第一次送件就通過" data-layer="boss">
+        <div class="squad-dot"></div>⚡ 建照審查加速
+      </div>
+
+      <!-- 全域 -->
+      <div class="squad-section-label">通用</div>
       <div class="squad-item active" data-squad="" data-name="全域諮詢" data-desc="自動路由至最適合的專業組別">
         <div class="squad-dot"></div>全域諮詢
       </div>
-      <div class="squad-item" data-squad="s03" data-name="法規智慧組" data-desc="容積率、建蔽率、建築法規查詢">
-        <div class="squad-dot"></div>法規智慧組
+
+      <!-- 設計層 -->
+      <div class="squad-section-label">設計層</div>
+      <div class="squad-item" data-squad="s03" data-name="法規查核組" data-desc="容積率、建蔽率、建築法規查詢">
+        <div class="squad-dot"></div>法規查核組
       </div>
       <div class="squad-item" data-squad="s04" data-name="建築設計組" data-desc="量體策略、外觀設計諮詢">
         <div class="squad-dot"></div>建築設計組
@@ -323,12 +405,71 @@
       <div class="squad-item" data-squad="s06" data-name="BIM 技術組" data-desc="Revit、IFC、碰撞偵測">
         <div class="squad-dot"></div>BIM 技術組
       </div>
-      <div class="squad-item" data-squad="s08" data-name="永續節能組" data-desc="EEWH 認證、ESG 指標">
-        <div class="squad-dot"></div>永續節能組
+      <div class="squad-item" data-squad="s07" data-name="綠建築組" data-desc="EEWH 認證、ESG 指標">
+        <div class="squad-dot"></div>綠建築組
       </div>
+      <div class="squad-item" data-squad="s13" data-name="結構工程組" data-desc="RC/SC/SRC選型、耐震設計">
+        <div class="squad-dot"></div>結構工程組
+      </div>
+      <div class="squad-item" data-squad="s14" data-name="機電工程組" data-desc="MEP 系統設計、管道衝突">
+        <div class="squad-dot"></div>機電工程組
+      </div>
+      <div class="squad-item" data-squad="s15" data-name="景觀設計組" data-desc="植栽計畫、綠覆率法規">
+        <div class="squad-dot"></div>景觀設計組
+      </div>
+      <div class="squad-item" data-squad="s16" data-name="施工管理組" data-desc="進度管理、監造法規">
+        <div class="squad-dot"></div>施工管理組
+      </div>
+      <div class="squad-item" data-squad="s17" data-name="地籍測量組" data-desc="地籍判讀、土地分區查詢">
+        <div class="squad-dot"></div>地籍測量組
+      </div>
+      <div class="squad-item" data-squad="s18" data-name="環評地質組" data-desc="環評流程、液化潛勢">
+        <div class="squad-dot"></div>環評地質組
+      </div>
+      <div class="squad-item" data-squad="s23" data-name="歷史建築修復組" data-desc="文資法、最小干預原則">
+        <div class="squad-dot"></div>歷史建築修復組
+      </div>
+      <div class="squad-item" data-squad="s24" data-name="醫療建築組" data-desc="感染控制分區、醫療法規">
+        <div class="squad-dot"></div>醫療建築組
+      </div>
+      <div class="squad-item" data-squad="s25" data-name="工業廠房組" data-desc="廠房結構選型、無塵室等級">
+        <div class="squad-dot"></div>工業廠房組
+      </div>
+
+      <!-- 管理層 -->
+      <div class="squad-section-label">管理層</div>
+      <div class="squad-item" data-squad="s09" data-name="行政整合組" data-desc="公文撰寫、建照行政流程">
+        <div class="squad-dot"></div>行政整合組
+      </div>
+      <div class="squad-item" data-squad="s19" data-name="物業管理組" data-desc="公寓大廈條例、設備維護">
+        <div class="squad-dot"></div>物業管理組
+      </div>
+      <div class="squad-item" data-squad="s20" data-name="智慧建築系統組" data-desc="BAS/BMS、智慧建築標章">
+        <div class="squad-dot"></div>智慧建築系統組
+      </div>
+
+      <!-- 商業層 -->
+      <div class="squad-section-label">商業層</div>
       <div class="squad-item" data-squad="s11" data-name="財務管理組" data-desc="工程造價估算、ROI 試算">
         <div class="squad-dot"></div>財務管理組
       </div>
+      <div class="squad-item" data-squad="s10" data-name="行銷公關組" data-desc="建案命名、文案撰寫">
+        <div class="squad-dot"></div>行銷公關組
+      </div>
+      <div class="squad-item" data-squad="s12" data-name="數據採集組" data-desc="實價登錄、市場行情">
+        <div class="squad-dot"></div>數據採集組
+      </div>
+      <div class="squad-item" data-squad="s21" data-name="不動產開發組" data-desc="可行性試算、容積獎勵">
+        <div class="squad-dot"></div>不動產開發組
+      </div>
+      <div class="squad-item" data-squad="s22" data-name="都更整合組" data-desc="都更 vs 危老、地主整合">
+        <div class="squad-dot"></div>都更整合組
+      </div>
+
+    </div>
+
+    <div class="sidebar-footer">
+      <span class="footer-count">26</span> Squads — 台灣建築業完整知識圖譜
     </div>
   </aside>
 
@@ -336,20 +477,85 @@
   <main class="main">
     <div class="squad-header">
       <div class="squad-name" id="squadName">全域諮詢</div>
+      <span class="squad-badge" id="squadBadge" style="display:none"></span>
       <div class="squad-desc" id="squadDesc">自動路由至最適合的專業組別</div>
     </div>
 
     <div class="messages" id="messages">
+
+      <!-- 一般空狀態 -->
       <div class="empty-state" id="emptyState">
         <div class="empty-title">建築智識，隨時待命</div>
         <div class="empty-sub">選擇左側 Squad，或直接提問，系統自動路由至最適合的專業組別。</div>
         <div class="sample-queries">
-          <button class="sample-query" onclick="useQuery(this)">這棟建築的容積率上限是多少？</button>
-          <button class="sample-query" onclick="useQuery(this)">15 層 RC 建築的工程造價估算</button>
+          <button class="sample-query" onclick="useQuery(this)">台北市第三種住宅區建蔽率上限是多少？</button>
+          <button class="sample-query" onclick="useQuery(this)">15 層 RC 建築的工程造價概估</button>
           <button class="sample-query" onclick="useQuery(this)">EEWH 銀級認證需要哪些條件？</button>
-          <button class="sample-query" onclick="useQuery(this)">IFC 模型的碰撞偵測流程</button>
+          <button class="sample-query" onclick="useQuery(this)">危老重建 vs 都市更新 怎麼選擇？</button>
         </div>
       </div>
+
+      <!-- S26 建照審查表單 -->
+      <div class="permit-form" id="permitForm">
+        <div class="permit-title">建照前合規查核</div>
+        <div class="permit-sub">
+          輸入基地條件，BossAgent 協調六大專業 Squad（法規/結構/機電/地籍/環評/行政），<br>
+          模擬建管處審查視角，找出所有潛在退件原因。
+        </div>
+        <div class="permit-grid">
+          <div class="permit-field">
+            <label class="permit-label">縣市</label>
+            <select class="permit-select" id="pCity">
+              <option>台北市</option><option>新北市</option><option>桃園市</option>
+              <option>台中市</option><option>台南市</option><option>高雄市</option>
+              <option>基隆市</option><option>新竹市</option><option>新竹縣</option>
+              <option>苗栗縣</option><option>彰化縣</option><option>南投縣</option>
+              <option>雲林縣</option><option>嘉義市</option><option>嘉義縣</option>
+              <option>屏東縣</option><option>宜蘭縣</option><option>花蓮縣</option>
+              <option>台東縣</option><option>澎湖縣</option><option>金門縣</option><option>連江縣</option>
+            </select>
+          </div>
+          <div class="permit-field">
+            <label class="permit-label">土地使用分區</label>
+            <select class="permit-select" id="pZone">
+              <option>第一種住宅區</option><option>第二種住宅區</option>
+              <option>第三種住宅區</option><option>第四種住宅區</option>
+              <option>第一種商業區</option><option>第二種商業區</option>
+              <option>第三種商業區</option><option>第四種商業區</option>
+              <option>甲種工業區</option><option>乙種工業區</option>
+              <option>丙種工業區</option><option>保護區</option><option>農業區</option>
+              <option>其他（請在備註說明）</option>
+            </select>
+          </div>
+          <div class="permit-field">
+            <label class="permit-label">基地面積（m²）</label>
+            <input class="permit-input" id="pArea" type="number" placeholder="例：500">
+          </div>
+          <div class="permit-field">
+            <label class="permit-label">計畫樓層數</label>
+            <input class="permit-input" id="pFloors" type="number" placeholder="例：12">
+          </div>
+          <div class="permit-field">
+            <label class="permit-label">地下層數</label>
+            <input class="permit-input" id="pBasement" type="number" placeholder="例：2">
+          </div>
+          <div class="permit-field">
+            <label class="permit-label">主要用途</label>
+            <select class="permit-select" id="pUse">
+              <option>集合住宅</option><option>透天住宅</option>
+              <option>辦公商業</option><option>旅館</option><option>醫療機構</option>
+              <option>工廠廠房</option><option>倉儲物流</option><option>學校</option>
+              <option>住商混合</option><option>其他</option>
+            </select>
+          </div>
+          <div class="permit-field span2">
+            <label class="permit-label">其他條件（選填）</label>
+            <input class="permit-input" id="pExtra" placeholder="例：臨 8m 道路、基地含坡地、已有舊建物…">
+          </div>
+        </div>
+        <button class="btn-permit" onclick="runPermitCheck()">生成合規查核報告</button>
+      </div>
+
     </div>
 
     <div class="file-indicator" id="fileIndicator">
@@ -382,14 +588,18 @@
 <div class="settings-overlay" id="settingsOverlay" onclick="overlayClick(event)">
   <div class="settings-panel">
     <div class="settings-title">設定</div>
+
     <div class="setting-group">
       <label class="setting-label">後端 API 位址</label>
       <input class="setting-input" id="settingEndpoint" placeholder="http://localhost:8000">
+      <div class="setting-hint">本地部署或 Railway/Render 部署的 FastAPI 後端位址</div>
     </div>
+
     <div class="setting-group">
       <label class="setting-label">用戶 ID</label>
       <input class="setting-input" id="settingUserId" placeholder="web_user">
     </div>
+
     <div class="setting-group">
       <label class="setting-label">角色</label>
       <select class="setting-input" id="settingRole">
@@ -401,6 +611,15 @@
         <option value="admin" selected>管理員</option>
       </select>
     </div>
+
+    <hr class="setting-divider">
+
+    <div class="setting-group">
+      <label class="setting-label">Claude API Key（預留）</label>
+      <input class="setting-input" id="settingApiKey" type="password" placeholder="sk-ant-… （尚未啟用）" disabled>
+      <div class="setting-hint">前端直連 Claude API，無需後端。功能開發中。</div>
+    </div>
+
     <button class="btn-save" onclick="saveSettings()">儲存設定</button>
   </div>
 </div>
@@ -414,34 +633,32 @@
     userId:   localStorage.getItem('aa_userId')   || 'web_user',
     role:     localStorage.getItem('aa_role')     || 'admin',
     squad: '',
+    squadName: '全域諮詢',
     file: null,
     busy: false,
+    messages: [],  // conversation history
   };
 
   // ── BOOT ─────────────────────────────────────────────
   addEventListener('DOMContentLoaded', () => {
-    document.getElementById('settingEndpoint').value  = S.endpoint;
-    document.getElementById('settingUserId').value    = S.userId;
-    document.getElementById('settingRole').value      = S.role;
+    document.getElementById('settingEndpoint').value = S.endpoint;
+    document.getElementById('settingUserId').value   = S.userId;
+    document.getElementById('settingRole').value     = S.role;
     checkConnection();
     bindSquads();
   });
 
   // ── CONNECTION ───────────────────────────────────────
   async function checkConnection() {
-    const ep = S.endpoint;
     setStatus('connecting');
-
     try {
-      const r = await fetch(`${ep}/health`, { signal: AbortSignal.timeout(5000) });
+      const r = await fetch(`${S.endpoint}/health`, { signal: AbortSignal.timeout(5000) });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       setStatus('online', `V${d.version || '21'} — 線上`);
-      toast('連線成功');
-      fetchSquads(ep);
+      toast('後端連線成功');
     } catch (e) {
-      setStatus('error', `離線`);
-      toast(`無法連線：${e.message}，請確認後端與 CORS 設定`, 4500);
+      setStatus('error', '離線');
     }
   }
 
@@ -453,48 +670,90 @@
   }
 
   // ── SQUADS ───────────────────────────────────────────
-  async function fetchSquads(ep) {
-    try {
-      const r = await fetch(`${ep}/api/squads`);
-      if (!r.ok) return;
-      const d = await r.json();
-      if (d.squads?.length) renderSquads(d.squads);
-    } catch {}
-  }
-
-  function renderSquads(squads) {
-    const list = document.getElementById('squadList');
-    list.innerHTML = `
-      <div class="squad-item active" data-squad="" data-name="全域諮詢" data-desc="自動路由至最適合的專業組別">
-        <div class="squad-dot"></div>全域諮詢
-      </div>
-    `;
-    squads.forEach(s => {
-      const el = Object.assign(document.createElement('div'), {
-        className: 'squad-item',
-        innerHTML: `<div class="squad-dot"></div>${s.name}`
-      });
-      Object.assign(el.dataset, {
-        squad: s.key,
-        name: s.name,
-        desc: (s.triggers || []).slice(0, 2).join('、') || s.name
-      });
-      list.appendChild(el);
-    });
-    bindSquads();
-  }
-
   function bindSquads() {
     document.querySelectorAll('.squad-item').forEach(el => {
       el.addEventListener('click', () => {
         document.querySelectorAll('.squad-item').forEach(e => e.classList.remove('active'));
         el.classList.add('active');
         S.squad = el.dataset.squad || '';
-        document.getElementById('squadName').textContent = el.dataset.name;
+        S.squadName = el.dataset.name || '全域諮詢';
+        S.messages = [];  // reset conversation on squad change
+
+        document.getElementById('squadName').textContent = S.squadName;
         document.getElementById('squadDesc').textContent = el.dataset.desc || '';
+
+        const badge = document.getElementById('squadBadge');
+        if (S.squad === 's26') {
+          badge.textContent = 'BossAgent';
+          badge.className = 'squad-badge boss-badge';
+          badge.style.display = '';
+        } else if (S.squad) {
+          badge.textContent = S.squad.toUpperCase();
+          badge.className = 'squad-badge';
+          badge.style.display = '';
+        } else {
+          badge.style.display = 'none';
+        }
+
+        // Show permit form or normal empty state
+        showAppropriateEmpty();
         document.getElementById('chatInput').focus();
       });
     });
+  }
+
+  function showAppropriateEmpty() {
+    const hasMessages = document.querySelectorAll('.msg').length > 0;
+    if (hasMessages) return;
+
+    const permitForm  = document.getElementById('permitForm');
+    const emptyState  = document.getElementById('emptyState');
+
+    if (S.squad === 's26') {
+      emptyState.style.display = 'none';
+      permitForm.classList.add('visible');
+    } else {
+      emptyState.style.display = '';
+      permitForm.classList.remove('visible');
+    }
+  }
+
+  // ── PERMIT CHECK (S26) ───────────────────────────────
+  function runPermitCheck() {
+    const city     = document.getElementById('pCity').value;
+    const zone     = document.getElementById('pZone').value;
+    const area     = document.getElementById('pArea').value;
+    const floors   = document.getElementById('pFloors').value;
+    const basement = document.getElementById('pBasement').value || '0';
+    const use      = document.getElementById('pUse').value;
+    const extra    = document.getElementById('pExtra').value;
+
+    if (!area || !floors) {
+      toast('請填寫基地面積與計畫樓層數', 2500);
+      return;
+    }
+
+    const query = [
+      `【建照前合規查核請求】`,
+      `縣市：${city}`,
+      `土地使用分區：${zone}`,
+      `基地面積：${area} m²`,
+      `計畫樓層：地上 ${floors} 層 / 地下 ${basement} 層`,
+      `主要用途：${use}`,
+      extra ? `其他條件：${extra}` : '',
+      ``,
+      `請依 S26 建照審查加速組的 BossAgent 流程，協調六大專業 Squad（法規/結構/機電/地籍/環評/行政），`,
+      `輸出完整的建照前合規查核報告，包含：核心指標、退件風險評估、結構機電建議、送件文件清單、預估審查週期。`,
+    ].filter(Boolean).join('\n');
+
+    hideAllEmpty();
+    document.getElementById('chatInput').value = query;
+    sendMessage();
+  }
+
+  function hideAllEmpty() {
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('permitForm').classList.remove('visible');
   }
 
   // ── SEND ─────────────────────────────────────────────
@@ -505,7 +764,7 @@
 
     input.value = '';
     input.style.height = 'auto';
-    hideEmpty();
+    hideAllEmpty();
     S.busy = true;
     document.getElementById('sendBtn').disabled = true;
 
@@ -523,19 +782,30 @@
         answer = (await r.json()).answer || '（無回應）';
         clearFile();
       } else {
+        // Prefix squad key so backend can route correctly
         const msg = S.squad ? `[${S.squad}] ${text}` : text;
         const r = await fetch(`${S.endpoint}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: S.userId, message: msg, role: S.role, context: {} })
+          body: JSON.stringify({
+            user_id: S.userId,
+            message: msg,
+            role: S.role,
+            squad: S.squad,
+            context: {}
+          })
         });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         answer = (await r.json()).answer || '（無回應）';
       }
       typing.remove();
-      addMsg('assistant', answer);
+      addMsg('assistant', answer, true);
     } catch (e) {
       typing.remove();
-      addMsg('assistant', `⚠ 連線錯誤：${e.message}\n\n請確認後端正在運行，並已設定 CORS Allow-Origin。`);
+      addMsg('assistant',
+        `⚠ 連線錯誤：${e.message}\n\n後端尚未啟動或不在此位址：${S.endpoint}\n\n` +
+        `你可以：\n• 在本機執行 \`python Naomi_V21_Final.py\`\n• 或在設定中修改後端位址`
+      );
     }
 
     S.busy = false;
@@ -543,14 +813,87 @@
     input.focus();
   }
 
+  // ── MARKDOWN RENDERER ────────────────────────────────
+  function renderMarkdown(text) {
+    // Escape HTML first
+    let s = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // Code blocks
+    s = s.replace(/```[\s\S]*?```/g, m => {
+      const code = m.slice(3, m.lastIndexOf('```')).replace(/^[^\n]*\n/, '');
+      return `<pre><code>${code}</code></pre>`;
+    });
+
+    // Inline code
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Headers
+    s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    s = s.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+    s = s.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+
+    // HR
+    s = s.replace(/^---+$/gm, '<hr>');
+
+    // Bold / italic
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*(.+?)\*/g,     '<em>$1</em>');
+
+    // Status icons with color
+    s = s.replace(/✅/g, '<span class="check-pass">✅</span>');
+    s = s.replace(/⚠️/g, '<span class="check-warn">⚠️</span>');
+    s = s.replace(/❌/g, '<span class="check-fail">❌</span>');
+
+    // Tables
+    s = s.replace(/(\|.+\|\n)+/g, m => {
+      const rows = m.trim().split('\n').filter(r => !/^\|[-\s|]+\|$/.test(r));
+      const html = rows.map((r, i) => {
+        const cells = r.split('|').filter(c => c.trim() !== '');
+        const tag = i === 0 ? 'th' : 'td';
+        return '<tr>' + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('') + '</tr>';
+      }).join('');
+      return `<table>${html}</table>`;
+    });
+
+    // Blockquote
+    s = s.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // Lists
+    s = s.replace(/(^[-•□] .+\n?)+/gm, m => {
+      const items = m.trim().split('\n').map(l => `<li>${l.replace(/^[-•□] /, '')}</li>`).join('');
+      return `<ul>${items}</ul>`;
+    });
+    s = s.replace(/(^\d+\. .+\n?)+/gm, m => {
+      const items = m.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /, '')}</li>`).join('');
+      return `<ol>${items}</ol>`;
+    });
+
+    // Paragraphs — wrap non-tagged lines
+    s = s.split('\n').map(line => {
+      if (!line.trim()) return '';
+      if (/^<[h|p|u|o|t|b|h|p|c|d]/.test(line.trim())) return line;
+      return `<p>${line}</p>`;
+    }).join('\n');
+
+    return s;
+  }
+
   // ── DOM HELPERS ──────────────────────────────────────
-  function addMsg(role, text) {
+  function addMsg(role, text, markdown = false) {
     const msgs = document.getElementById('messages');
     const el = document.createElement('div');
     el.className = `msg ${role}`;
+
+    const content = (role === 'assistant' && markdown)
+      ? renderMarkdown(text)
+      : esc(text).replace(/\n/g, '<br>');
+
     el.innerHTML = `
-      <div class="msg-label">${role === 'user' ? '您' : 'AutoArch'}</div>
-      <div class="msg-bubble">${esc(text)}</div>
+      <div class="msg-label">${role === 'user' ? '您' : S.squadName}</div>
+      <div class="msg-bubble">${content}</div>
     `;
     msgs.appendChild(el);
     msgs.scrollTop = msgs.scrollHeight;
@@ -566,13 +909,8 @@
     return el;
   }
 
-  function hideEmpty() {
-    const e = document.getElementById('emptyState');
-    if (e) e.style.display = 'none';
-  }
-
   function esc(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   // ── FILE ─────────────────────────────────────────────
