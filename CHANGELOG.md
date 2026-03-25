@@ -1,5 +1,10 @@
 # CHANGELOG
 
+- `2026-03-26` **feat: S26 BossAgent + full frontend overhaul** (Jack Chang)
+- `2026-03-25` **[Bot] 更新系統進化狀態** (Naomi Bot)
+- `2026-03-26` **feat: add 13 new squad system prompts (S13-S25)** (Jack Chang)
+- `2026-03-25` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
+- `2026-03-25` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
 - `2026-03-26` **feat: add 11 squad system prompts + fire safety + urban renewal laws** (Jack Chang)
 - `2026-03-25` **[Bot] 更新系統進化狀態** (Naomi Bot)
 - `2026-03-25` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
@@ -43,10 +48,5 @@
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
-- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
-- `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
 - `2026-03-23` **[Bot] 自動更新索引與 CHANGELOG** (Naomi Bot)
 - `2026-03-23` **[Bot] 更新首頁執行進度儀表板** (Naomi Bot)
